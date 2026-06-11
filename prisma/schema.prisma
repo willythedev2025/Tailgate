@@ -1,0 +1,285 @@
+// Clubhouse — Sports Pools Platform
+// Postgres-first schema; SQLite for local dev (via DATABASE_URL=file:./dev.db)
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ── Auth.js (NextAuth v5) required tables ─────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ── Core domain ───────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  emailVerified DateTime?
+  image     String?
+  phone     String?
+  createdAt DateTime @default(now())
+
+  accounts       Account[]
+  sessions       Session[]
+  groupMembers   GroupMember[]
+  entries        Entry[]
+  createdGroups  Group[]        @relation("GroupCreator")
+  createdPools   Pool[]         @relation("PoolCreator")
+  createdInvites Invite[]
+  activities     ActivityItem[]
+  reactions      Reaction[]
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  emoji       String   @default("🏆")
+  createdById String
+  createdAt   DateTime @default(now())
+
+  createdBy  User          @relation("GroupCreator", fields: [createdById], references: [id])
+  members    GroupMember[]
+  pools      Pool[]
+  invites    Invite[]
+  activities ActivityItem[]
+}
+
+model GroupMember {
+  groupId  String
+  userId   String
+  role     String   @default("PLAYER") // COMMISSIONER | PLAYER
+  joinedAt DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+}
+
+model Pool {
+  id              String   @id @default(cuid())
+  groupId         String
+  gameType        String   // NFL_PICKEM | CFB_PICKEM | NFL_SURVIVOR | GOLF_MAJOR
+  name            String
+  season          Int
+  status          String   @default("DRAFT") // DRAFT | OPEN | LOCKED | LIVE | COMPLETE
+  settingsJson    String   @default("{}") // JSON blob of game-specific settings
+  entryFeeDisplay String?
+  settleUpNote    String?
+  lockAt          DateTime?
+  createdById     String
+  createdAt       DateTime @default(now())
+
+  group     Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdBy User           @relation("PoolCreator", fields: [createdById], references: [id])
+  entries   Entry[]
+  invites   Invite[]
+  activities ActivityItem[]
+  slateGames PoolSlateGame[]
+}
+
+model Entry {
+  id         String   @id @default(cuid())
+  poolId     String
+  userId     String
+  entryName  String
+  status     String   @default("ACTIVE") // ALIVE | ELIMINATED | ACTIVE | OUT
+  eliminatedWeek String? // survivor: week key when eliminated
+  eliminatedTeam String? // survivor: team slug when eliminated
+  outReason  String?  // golf: "Spieth MC"
+  createdAt  DateTime @default(now())
+
+  pool  Pool   @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  picks Pick[]
+}
+
+model Pick {
+  id          String   @id @default(cuid())
+  entryId     String
+  periodKey   String   // "week-6" or "round-1" or "tournament"
+  payloadJson String   // JSON blob, game-specific
+  lockedAt    DateTime?
+  result      String?  // WIN | LOSS | PUSH | PENDING
+  points      Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  entry Entry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, periodKey])
+}
+
+// ── Sport event data ──────────────────────────────────────────────────────────
+
+model SportEvent {
+  id         String   @id @default(cuid())
+  sport      String   // NFL | CFB
+  season     Int
+  week       Int?
+  startsAt   DateTime
+  homeTeam   String   // team slug
+  awayTeam   String   // team slug
+  homeScore  Int?
+  awayScore  Int?
+  spread     Float?   // negative = home favored; applied to home score
+  status     String   @default("SCHEDULED") // SCHEDULED | LIVE | FINAL
+  gameNumber Int?     // ordering within week
+  createdAt  DateTime @default(now())
+
+  slateGames PoolSlateGame[]
+}
+
+model PoolSlateGame {
+  poolId      String
+  sportEventId String
+  sortOrder   Int @default(0)
+
+  pool       Pool       @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  sportEvent SportEvent @relation(fields: [sportEventId], references: [id], onDelete: Cascade)
+
+  @@id([poolId, sportEventId])
+}
+
+model Golfer {
+  id      String @id @default(cuid())
+  name    String
+  country String @default("USA")
+  owgr    Int?   // world ranking for sorting field
+
+  scores GolfScore[]
+  tournamentFields GolfTournamentField[]
+}
+
+model GolfTournament {
+  id        String   @id @default(cuid())
+  name      String
+  season    Int
+  startsAt  DateTime
+  poolId    String?  @unique // one tournament per golf pool
+  status    String   @default("SCHEDULED") // SCHEDULED | LIVE | COMPLETE
+  playoffWinnerId String?
+
+  field  GolfTournamentField[]
+  scores GolfScore[]
+}
+
+model GolfTournamentField {
+  tournamentId String
+  golferId     String
+
+  tournament GolfTournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  golfer     Golfer         @relation(fields: [golferId], references: [id], onDelete: Cascade)
+
+  @@id([tournamentId, golferId])
+}
+
+model GolfScore {
+  id             String  @id @default(cuid())
+  tournamentId   String
+  golferId       String
+  round1         Int?
+  round2         Int?
+  round3         Int?
+  round4         Int?
+  total          Int?    // relative to par
+  thruHole       Int?    // current round progress
+  currentRound   Int?
+  status         String  @default("ACTIVE") // ACTIVE | CUT | WD | DQ | DNS | MDF
+  playoffWinner  Boolean @default(false)
+  playoffAdj     Int     @default(0) // -1 if playoff winner
+
+  tournament GolfTournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  golfer     Golfer         @relation(fields: [golferId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, golferId])
+}
+
+// ── Invites ───────────────────────────────────────────────────────────────────
+
+model Invite {
+  id          String    @id @default(cuid())
+  groupId     String
+  poolId      String?
+  code        String    @unique
+  createdById String
+  expiresAt   DateTime?
+  maxUses     Int?
+  uses        Int       @default(0)
+  opens       Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  group     Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  pool      Pool? @relation(fields: [poolId], references: [id], onDelete: SetNull)
+  createdBy User  @relation(fields: [createdById], references: [id])
+}
+
+// ── Activity feed ─────────────────────────────────────────────────────────────
+
+model ActivityItem {
+  id          String   @id @default(cuid())
+  groupId     String
+  poolId      String?
+  userId      String?
+  type        String   // PICK_SUBMITTED | ELIMINATED | SURVIVED | WEEK_RESULT | JOINED | GOLF_OUT | SHARE
+  payloadJson String   @default("{}")
+  createdAt   DateTime @default(now())
+
+  group     Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  pool      Pool?      @relation(fields: [poolId], references: [id], onDelete: SetNull)
+  user      User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  reactions Reaction[]
+}
+
+model Reaction {
+  id             String   @id @default(cuid())
+  activityItemId String
+  userId         String
+  emoji          String   // 🔥 💀 😂 🤡 🐐
+  createdAt      DateTime @default(now())
+
+  activityItem ActivityItem @relation(fields: [activityItemId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([activityItemId, userId, emoji])
+}

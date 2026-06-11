@@ -1,26 +1,176 @@
 @import "tailwindcss";
 
+@theme {
+  /* ── Brand colors ── */
+  --color-bg:        #0B0D10;
+  --color-surface:   #14171C;
+  --color-surface-2: #1C2029;
+  --color-border:    #252A33;
+  --color-muted:     #3A4152;
+
+  --color-accent:    #E8112D; /* primary CTA / live state */
+  --color-gold:      #FFB52E; /* points / wins */
+  --color-green:     #2ECC71; /* correct picks / survival */
+  --color-red:       #FF4D4D; /* wrong / eliminated */
+  --color-blue:      #3B82F6; /* info / links */
+
+  --color-text:      #F1F3F5;
+  --color-text-muted:#8B95A4;
+  --color-text-dim:  #556070;
+
+  /* ── Typography ── */
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", monospace;
+
+  /* ── Spacing / Radius ── */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+}
+
+/* ── Base reset ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-muted); }
+
+/* ── Typography utilities ── */
+.text-headline {
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.text-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Card / surface ── */
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+/* ── Team rail (4px left border strip) ── */
+.team-rail {
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+
+/* ── Skeleton loader ── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-surface-2) 50%, var(--color-surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Pick stamp animation ── */
+@keyframes stamp {
+  0%   { opacity: 0; transform: scale(1.4) rotate(-8deg); }
+  60%  { opacity: 1; transform: scale(0.95) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+.pick-stamp {
+  animation: stamp 0.35s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+/* ── Elimination flatline ── */
+@keyframes flatline {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.3; }
+  100% { opacity: 0.5; }
+}
+
+.eliminated {
+  animation: flatline 0.6s ease forwards;
+  filter: grayscale(0.4);
+}
+
+/* ── Dot result history chips ── */
+.dot-win  { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--color-green); }
+.dot-loss { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--color-red); }
+.dot-push { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--color-muted); }
+
+/* ── Ticker strip ── */
+.ticker {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.375rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.ticker-live {
+  color: var(--color-accent);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ticker-live::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* ── Rank movement arrows ── */
+.rank-up   { color: var(--color-green); font-size: 0.7rem; }
+.rank-down { color: var(--color-red);   font-size: 0.7rem; }
+.rank-same { color: var(--color-muted); font-size: 0.7rem; }
