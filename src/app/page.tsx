@@ -50,7 +50,7 @@ export default async function LandingPage() {
       </header>
 
       {/* Hero — full-bleed football image with overlay */}
-      <section className="relative h-[480px] md:h-[560px] overflow-hidden">
+      <section className="relative min-h-[480px] md:min-h-[560px] overflow-hidden flex items-center">
         <img
           src={SPORT_IMAGES.football}
           alt="Football field"
@@ -63,7 +63,7 @@ export default async function LandingPage() {
             background: "linear-gradient(90deg, rgba(11,13,16,0.92) 0%, rgba(11,13,16,0.6) 60%, rgba(11,13,16,0.2) 100%)",
           }}
         />
-        <div className="relative h-full flex flex-col justify-center px-8 md:px-16 max-w-2xl">
+        <div className="relative flex flex-col px-8 md:px-16 max-w-2xl py-16 md:py-20">
           <p
             className="text-xs font-bold uppercase tracking-[0.2em] mb-4"
             style={{ color: "var(--color-accent)" }}
@@ -99,12 +99,10 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Stats bar — explicit z-index keeps it cleanly below the hero */}
+      {/* Stats bar */}
       <div
         className="flex items-center justify-center gap-6 md:gap-12 py-5 flex-wrap"
         style={{
-          position: "relative",
-          zIndex: 10,
           backgroundColor: "var(--color-surface)",
           borderTop: "1px solid var(--color-border)",
           borderBottom: "1px solid var(--color-border)",
