@@ -63,7 +63,7 @@ export default async function LandingPage() {
             background: "linear-gradient(90deg, rgba(11,13,16,0.92) 0%, rgba(11,13,16,0.6) 60%, rgba(11,13,16,0.2) 100%)",
           }}
         />
-        <div className="relative flex flex-col px-8 md:px-16 max-w-2xl py-16 md:py-20">
+        <div className="relative flex flex-col px-8 md:px-16 max-w-2xl py-12">
           <p
             className="text-xs font-bold uppercase tracking-[0.2em] mb-4"
             style={{ color: "var(--color-accent)" }}
