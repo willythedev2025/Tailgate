@@ -3,44 +3,35 @@ import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
-import { Avatar, AvatarStack } from "@/components/ui/avatar";
+import { AvatarStack } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ActivityFeed } from "@/components/activity/feed";
+import { Card, CardContent } from "@/components/ui/card";
 
 const GAME_TYPE_LABELS: Record<string, string> = {
-  NFL_PICKEM: "NFL Pick'em",
-  CFB_PICKEM: "CFB Pick'em",
+  NFL_PICKEM:   "NFL Pick'em",
+  CFB_PICKEM:   "CFB Pick'em",
   NFL_SURVIVOR: "NFL Survivor",
-  GOLF_MAJOR: "Golf Major",
+  GOLF_MAJOR:   "Golf Major",
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Draft",
-  OPEN: "Open",
-  LOCKED: "Locked",
-  LIVE: "Live",
-  COMPLETE: "Complete",
+const STATUS_BADGE: Record<string, { label: string; color: string }> = {
+  DRAFT:    { label: "Draft",    color: "var(--color-text-dim)" },
+  OPEN:     { label: "Open",     color: "var(--color-gold)" },
+  LOCKED:   { label: "Locked",   color: "var(--color-text-muted)" },
+  LIVE:     { label: "Live",     color: "var(--color-accent)" },
+  COMPLETE: { label: "Complete", color: "var(--color-text-dim)" },
 };
 
-function entryStatusForDisplay(entryStatus: string | null, poolStatus: string): {
-  label: string;
-  variant: "alive" | "eliminated" | "pending" | "live" | "out";
-} {
-  if (!entryStatus) return { label: "Not entered", variant: "pending" };
-  if (entryStatus === "ELIMINATED") return { label: "Eliminated", variant: "eliminated" };
-  if (entryStatus === "OUT") return { label: "Out", variant: "out" };
-  if (entryStatus === "ALIVE") return { label: "Alive", variant: "alive" };
-  if (poolStatus === "LIVE") return { label: "Active", variant: "live" };
-  return { label: "Entered", variant: "alive" };
+function entryBadge(status: string | null): { label: string; variant: "alive" | "eliminated" | "pending" | "live" | "out" } {
+  if (!status)                return { label: "Not entered",  variant: "pending" };
+  if (status === "ELIMINATED") return { label: "Eliminated",   variant: "eliminated" };
+  if (status === "OUT")        return { label: "Out",          variant: "out" };
+  if (status === "ALIVE")      return { label: "Alive",        variant: "alive" };
+  return                              { label: "Active",       variant: "live" };
 }
 
-export default async function GroupPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function GroupPage({ params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
@@ -49,13 +40,11 @@ export default async function GroupPage({
   const group = await prisma.group.findUnique({
     where: { slug },
     include: {
-      members: {
-        include: { user: true },
-      },
+      members: { include: { user: true } },
       pools: {
         where: { status: { in: ["DRAFT", "OPEN", "LIVE", "LOCKED"] } },
         include: {
-          entries: true,
+          entries: { where: { userId: session.user.id } },
           _count: { select: { entries: true } },
         },
         orderBy: { createdAt: "desc" },
@@ -70,32 +59,12 @@ export default async function GroupPage({
 
   const isCommissioner = membership.role === "COMMISSIONER";
 
-  // Fetch recent activity
-  const activities = await prisma.activityItem.findMany({
-    where: { groupId: group.id },
-    orderBy: { createdAt: "desc" },
-    take: 10,
-    include: { user: true },
-  });
-
-  const activityUsers = activities.reduce<Record<string, { name: string | null; image: string | null }>>(
-    (acc, item) => {
-      if (item.user) {
-        acc[item.user.id] = { name: item.user.name, image: item.user.image };
-      }
-      return acc;
-    },
-    {}
-  );
-
-  const memberAvatars = group.members.map((m) => ({
-    src: m.user.image,
-    name: m.user.name,
-  }));
+  const memberAvatars = group.members.map((m) => ({ src: m.user.image, name: m.user.name }));
 
   return (
     <AppShell>
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-8">
+
         {/* Group header */}
         <div
           className="rounded-xl p-5 border"
@@ -109,13 +78,11 @@ export default async function GroupPage({
               {group.emoji}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-headline text-2xl" style={{ color: "var(--color-text)" }}>
-                  {group.name}
-                </h1>
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <h1 className="text-headline text-2xl text-white">{group.name}</h1>
                 {isCommissioner && <Badge variant="commissioner">Commissioner</Badge>}
               </div>
-              <div className="flex items-center gap-3 mt-2">
+              <div className="flex items-center gap-3">
                 <AvatarStack users={memberAvatars} max={6} size="sm" />
                 <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                   {group.members.length} member{group.members.length !== 1 ? "s" : ""}
@@ -124,9 +91,11 @@ export default async function GroupPage({
             </div>
             {isCommissioner && (
               <div className="flex items-center gap-2 shrink-0">
-                <InviteButton groupId={group.id} />
+                <Link href={`/join/${group.id}`}>
+                  <Button variant="secondary" size="sm">Invite</Button>
+                </Link>
                 <Link href={`/p/new?groupId=${group.id}`}>
-                  <Button variant="primary" size="sm">+ Create pool</Button>
+                  <Button variant="primary" size="sm">+ Pool</Button>
                 </Link>
               </div>
             )}
@@ -135,65 +104,69 @@ export default async function GroupPage({
 
         {/* Active pools */}
         <section>
-          <h2 className="text-label mb-3">Active pools</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-label">Active pools</h2>
+            {isCommissioner && (
+              <Link
+                href={`/p/new?groupId=${group.id}`}
+                className="text-xs font-bold uppercase tracking-widest transition-colors"
+                style={{ color: "var(--color-accent)" }}
+              >
+                + New pool
+              </Link>
+            )}
+          </div>
+
           {group.pools.length === 0 ? (
             <div
-              className="rounded-xl border px-6 py-10 text-center"
+              className="rounded-xl border px-6 py-12 text-center"
               style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-surface)" }}
             >
-              <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-                No active pools yet.
-                {isCommissioner && (
-                  <> <Link href={`/p/new?groupId=${group.id}`} className="font-bold underline" style={{ color: "var(--color-accent)" }}>Create the first one.</Link></>
-                )}
+              <p className="text-sm mb-1 font-bold text-white">No active pools</p>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                {isCommissioner
+                  ? "Create your first pool to get started."
+                  : "Your commissioner hasn't created a pool yet."}
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {group.pools.map((pool) => {
-                const userEntry = pool.entries.find(
-                  (e) => e.userId === session.user!.id
-                );
-                const entryStatus = entryStatusForDisplay(
-                  userEntry?.status ?? null,
-                  pool.status
-                );
+                const userEntry = pool.entries[0] ?? null;
+                const badge = entryBadge(userEntry?.status ?? null);
+                const statusInfo = STATUS_BADGE[pool.status] ?? { label: pool.status, color: "var(--color-text-dim)" };
                 const isLive = pool.status === "LIVE";
 
                 return (
-                  <Link key={pool.id} href={`/p/${pool.id}`}>
-                    <Card clickable className="hover:border-[var(--color-muted)]">
+                  <Link key={pool.id} href={`/p/${pool.id}`} className="block">
+                    <Card clickable>
                       <CardContent className="flex items-center gap-4 py-4">
+                        {/* Left: game type stripe */}
+                        <div
+                          className="w-1 self-stretch rounded-full shrink-0"
+                          style={{ backgroundColor: isLive ? "var(--color-accent)" : "var(--color-border)" }}
+                        />
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                             <span
-                              className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                              style={{
-                                backgroundColor: "var(--color-surface-2)",
-                                color: "var(--color-text-muted)",
-                              }}
+                              className="text-[10px] font-bold uppercase tracking-wider"
+                              style={{ color: "var(--color-text-dim)" }}
                             >
                               {GAME_TYPE_LABELS[pool.gameType] ?? pool.gameType}
                             </span>
-                            {isLive ? (
-                              <Badge variant="live">Live</Badge>
-                            ) : (
-                              <span
-                                className="text-[10px] font-bold uppercase tracking-wider"
-                                style={{ color: "var(--color-text-dim)" }}
-                              >
-                                {STATUS_LABELS[pool.status] ?? pool.status}
-                              </span>
-                            )}
+                            <span
+                              className="text-[10px] font-bold uppercase tracking-wider"
+                              style={{ color: statusInfo.color }}
+                            >
+                              {isLive ? "● LIVE" : statusInfo.label}
+                            </span>
                           </div>
-                          <p className="font-bold text-sm" style={{ color: "var(--color-text)" }}>
-                            {pool.name}
-                          </p>
+                          <p className="font-black text-sm text-white">{pool.name}</p>
                           <p className="text-xs mt-0.5" style={{ color: "var(--color-text-dim)" }}>
                             {pool._count.entries} {pool._count.entries === 1 ? "entry" : "entries"}
                           </p>
                         </div>
-                        <Badge variant={entryStatus.variant}>{entryStatus.label}</Badge>
+                        <Badge variant={badge.variant}>{badge.label}</Badge>
                       </CardContent>
                     </Card>
                   </Link>
@@ -203,36 +176,43 @@ export default async function GroupPage({
           )}
         </section>
 
-        {/* Activity feed */}
-        {activities.length > 0 && (
-          <section>
-            <h2 className="text-label mb-3">Recent activity</h2>
-            <div
-              className="rounded-xl border overflow-hidden"
-              style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
-            >
-              <ActivityFeed items={activities} users={activityUsers} />
-            </div>
-          </section>
-        )}
+        {/* Members */}
+        <section>
+          <h2 className="text-label mb-3">Members</h2>
+          <div
+            className="rounded-xl border overflow-hidden"
+            style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+          >
+            {group.members.map((m, i) => (
+              <div
+                key={m.userId}
+                className="flex items-center gap-3 px-4 py-3"
+                style={{
+                  borderTop: i > 0 ? "1px solid var(--color-border)" : undefined,
+                }}
+              >
+                {m.user.image ? (
+                  <img src={m.user.image} alt={m.user.name ?? ""} className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black"
+                    style={{ backgroundColor: "var(--color-accent)", color: "#fff" }}
+                  >
+                    {(m.user.name ?? "?")[0]}
+                  </div>
+                )}
+                <span className="text-sm font-semibold text-white flex-1">{m.user.name ?? m.user.email}</span>
+                {m.role === "COMMISSIONER" && (
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--color-gold)" }}>
+                    Commissioner
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
       </div>
     </AppShell>
-  );
-}
-
-// Server component can't inline a form for invite — use a client-side copy
-function InviteButton({ groupId }: { groupId: string }) {
-  return (
-    <form
-      action={async () => {
-        "use server";
-        // In production this would generate an invite and copy the link
-        // For now, redirect to the invite creation page
-      }}
-    >
-      <Button variant="secondary" size="sm" type="button">
-        Invite
-      </Button>
-    </form>
   );
 }
