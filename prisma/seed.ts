@@ -3,12 +3,11 @@
 
 import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-const adapter = new PrismaLibSql({
-  url: process.env.TURSO_DATABASE_URL ?? "file:./dev.db",
-  authToken: process.env.TURSO_AUTH_TOKEN,
-});
+const pool = new Pool({ connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter } as any);
 
 async function main() {
