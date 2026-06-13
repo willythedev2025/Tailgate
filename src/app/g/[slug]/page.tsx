@@ -9,10 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 const GAME_TYPE_LABELS: Record<string, string> = {
-  NFL_PICKEM:   "NFL Pick'em",
-  CFB_PICKEM:   "CFB Pick'em",
-  NFL_SURVIVOR: "NFL Survivor",
-  GOLF_MAJOR:   "Golf Major",
+  NFL_PICKEM:    "NFL Pick'em",
+  CFB_PICKEM:    "CFB Pick'em",
+  NFL_SURVIVOR:  "NFL Survivor",
+  GOLF_MAJOR:    "Golf Major",
+  GOLF_ONE_DONE: "One & Done",
 };
 
 const STATUS_BADGE: Record<string, { label: string; color: string }> = {

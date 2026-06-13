@@ -19,6 +19,14 @@ function getCurrentWeekNumber(): number {
   return Math.max(1, Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000)) + 1);
 }
 
+const GAME_TYPE_LABELS: Record<string, string> = {
+  NFL_PICKEM: "NFL Pick'em",
+  CFB_PICKEM: "CFB Pick'em",
+  NFL_SURVIVOR: "NFL Survivor",
+  GOLF_MAJOR: "Golf Major",
+  GOLF_ONE_DONE: "One & Done",
+};
+
 export default async function PoolPage({
   params,
 }: {
@@ -74,7 +82,7 @@ export default async function PoolPage({
               className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
               style={{ backgroundColor: "var(--color-surface-2)", color: "var(--color-text-muted)" }}
             >
-              {pool.gameType.replace("_", " ")}
+              {GAME_TYPE_LABELS[pool.gameType] ?? pool.gameType.replace(/_/g, " ")}
             </span>
             {isLive && <Badge variant="live">Live</Badge>}
           </div>
@@ -134,6 +142,13 @@ export default async function PoolPage({
 
         {pool.gameType === "GOLF_MAJOR" && (
           <GolfPoolView
+            pool={pool}
+            userEntry={userEntry}
+          />
+        )}
+
+        {pool.gameType === "GOLF_ONE_DONE" && (
+          <OneDonePoolView
             pool={pool}
             userEntry={userEntry}
           />
@@ -425,6 +440,154 @@ function PickemPoolView({
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── One & Done view ───────────────────────────────────────────────────────────
+
+async function OneDonePoolView({
+  pool,
+  userEntry,
+}: {
+  pool: NonNullable<PoolWithEntries>;
+  userEntry: EntryWithUser | null;
+}) {
+  const { scoreOneAndDoneEntry } = await import("@/lib/scoring/one-done");
+
+  const tournaments = await prisma.golfTournament.findMany({
+    where: { season: pool.season },
+    orderBy: { startsAt: "asc" },
+    include: { scores: true },
+  });
+
+  const oneDoneTournaments = tournaments.map((t) => ({
+    id: t.id,
+    name: t.name,
+    startsAt: t.startsAt,
+    status: t.status,
+    scores: t.scores.map((s) => ({ golferId: s.golferId, total: s.total, status: s.status })),
+  }));
+
+  const nextMajor = tournaments.find((t) => new Date(t.startsAt) > new Date()) ?? null;
+  const userPick = nextMajor && userEntry
+    ? userEntry.picks.find((p) => p.periodKey === nextMajor.id) ?? null
+    : null;
+  let userPickName: string | null = null;
+  if (userPick) {
+    try {
+      userPickName = (JSON.parse(userPick.payloadJson) as { golferName?: string }).golferName ?? null;
+    } catch { /* */ }
+  }
+
+  const ranked = pool.entries
+    .map((e) => ({ entry: e, total: scoreOneAndDoneEntry(e.picks, oneDoneTournaments).total }))
+    .sort((a, b) => a.total - b.total)
+    .slice(0, 5);
+
+  return (
+    <div className="space-y-6">
+      {/* Next major CTA */}
+      {nextMajor && (
+        <div
+          className="rounded-xl border px-5 py-5 flex items-center justify-between gap-4"
+          style={{
+            backgroundColor: "var(--color-surface)",
+            borderColor: userPick ? "var(--color-border)" : "var(--color-accent)",
+          }}
+        >
+          <div>
+            <p className="font-black text-sm" style={{ color: "var(--color-text)" }}>
+              {nextMajor.name} ·{" "}
+              {new Date(nextMajor.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+              {userPick
+                ? `You're on ${userPickName ?? "a golfer"} — editable until tee-off.`
+                : "One golfer. No reuse. Choose wisely."}
+            </p>
+          </div>
+          {userEntry && (
+            <Link href={`/p/${pool.id}/picks`}>
+              <Button variant={userPick ? "secondary" : "primary"}>
+                {userPick ? "Edit pick" : "Make pick"}
+              </Button>
+            </Link>
+          )}
+        </div>
+      )}
+
+      {/* Season schedule */}
+      <div>
+        <h2 className="text-label mb-3">Majors</h2>
+        <div
+          className="rounded-xl border overflow-hidden"
+          style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+        >
+          {tournaments.map((t) => (
+            <div
+              key={t.id}
+              className="flex items-center gap-3 px-4 py-3 border-b last:border-0"
+              style={{ borderColor: "var(--color-border)" }}
+            >
+              <span className="flex-1 text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                {t.name}
+              </span>
+              <span className="text-xs" style={{ color: "var(--color-text-dim)" }}>
+                {new Date(t.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              </span>
+              {t.status === "LIVE" ? (
+                <Badge variant="live">Live</Badge>
+              ) : (
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--color-text-dim)" }}>
+                  {t.status === "COMPLETE" ? "Final" : "Upcoming"}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Leaderboard preview */}
+      {ranked.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-label">Leaderboard</h2>
+            <Link href={`/p/${pool.id}/standings`}>
+              <Button variant="ghost" size="sm">Full standings →</Button>
+            </Link>
+          </div>
+          <div
+            className="rounded-xl border overflow-hidden"
+            style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+          >
+            {ranked.map(({ entry, total }, i) => (
+              <div
+                key={entry.id}
+                className="flex items-center gap-3 px-4 py-3 border-b last:border-0"
+                style={{ borderColor: "var(--color-border)" }}
+              >
+                <span
+                  className="w-6 text-center font-black text-sm tabular"
+                  style={{ color: i === 0 ? "var(--color-gold)" : "var(--color-text-dim)" }}
+                >
+                  {i + 1}
+                </span>
+                <Avatar src={entry.user.image} name={entry.user.name} size="sm" />
+                <span className="flex-1 text-sm font-semibold truncate" style={{ color: "var(--color-text)" }}>
+                  {entry.entryName}
+                </span>
+                <span
+                  className="font-black tabular text-sm"
+                  style={{ color: i === 0 ? "var(--color-gold)" : total < 0 ? "var(--color-green)" : "var(--color-text)" }}
+                >
+                  {scoreToDisplay(total)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

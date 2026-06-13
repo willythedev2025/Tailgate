@@ -49,7 +49,6 @@ export default async function NewPoolPage({
     _count: true,
   });
   const golfSeasons = await prisma.golfTournament.findMany({
-    where: { poolId: null },
     select: { season: true },
     distinct: ["season"],
   });

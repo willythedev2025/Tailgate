@@ -12,6 +12,7 @@ const GAME_TYPE_LABELS: Record<string, string> = {
   CFB_PICKEM: "CFB Pick'em",
   NFL_SURVIVOR: "NFL Survivor",
   GOLF_MAJOR: "Golf Major",
+  GOLF_ONE_DONE: "One & Done",
 };
 
 function entryBadge(status: string | null): { label: string; variant: "alive" | "eliminated" | "pending" | "live" | "out" } {

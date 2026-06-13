@@ -22,6 +22,7 @@ const GAME_TYPE_SPORT: Record<string, string | null> = {
   CFB_PICKEM: "CFB",
   NFL_SURVIVOR: "NFL",
   GOLF_MAJOR: null,
+  GOLF_ONE_DONE: null,
 };
 
 const DEFAULT_SETTINGS: Record<string, object> = {
@@ -29,13 +30,14 @@ const DEFAULT_SETTINGS: Record<string, object> = {
   CFB_PICKEM: { ats: false, bestBet: true },
   NFL_SURVIVOR: { mulligan: false, allEliminated: "end" },
   GOLF_MAJOR: { bonusLabels: [] },
+  GOLF_ONE_DONE: { penalty: "worst-plus-2" },
 };
 
 // ── createPool ────────────────────────────────────────────────────────────────
 
 const CreatePoolSchema = z.object({
   groupId: z.string().min(1),
-  gameType: z.enum(["NFL_PICKEM", "CFB_PICKEM", "NFL_SURVIVOR", "GOLF_MAJOR"]),
+  gameType: z.enum(["NFL_PICKEM", "CFB_PICKEM", "NFL_SURVIVOR", "GOLF_MAJOR", "GOLF_ONE_DONE"]),
   name: z.string().min(1).max(80),
   season: z.number().int().min(2020).max(2100),
   entryFeeDisplay: z.string().max(40).optional(),

@@ -56,11 +56,28 @@ export default async function HomePage() {
 
   const actionItems: ActionItem[] = [];
 
+  // One & Done pools key picks by tournament id — find each season's next major
+  const upcomingMajors = await prisma.golfTournament.findMany({
+    where: { startsAt: { gt: new Date() } },
+    orderBy: { startsAt: "asc" },
+  });
+  const nextMajorBySeason = new Map<number, string>();
+  for (const t of upcomingMajors) {
+    if (!nextMajorBySeason.has(t.season)) nextMajorBySeason.set(t.season, t.id);
+  }
+
   for (const membership of memberships) {
     for (const pool of membership.group.pools) {
       for (const entry of pool.entries) {
+        let periodKey: string | null = weekKey;
+        if (pool.gameType === "GOLF_MAJOR") periodKey = "tournament";
+        if (pool.gameType === "GOLF_ONE_DONE") {
+          periodKey = nextMajorBySeason.get(pool.season) ?? null;
+        }
+        if (!periodKey) continue;
+
         const hasPick = await prisma.pick.findFirst({
-          where: { entryId: entry.id, periodKey: weekKey },
+          where: { entryId: entry.id, periodKey },
         });
         const isAliveOrActive =
           entry.status === "ACTIVE" || entry.status === "ALIVE";

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { AppShell } from "@/components/layout/app-shell";
 import { SurvivorPicksClient } from "./survivor-picks-client";
 import { PickemPicksClient } from "./pickem-picks-client";
+import { OneDonePicksClient } from "./one-done-picks-client";
 
 function getCurrentWeekKey(): string {
   const now = new Date();
@@ -116,15 +117,74 @@ export default async function PicksPage({
     } catch { /* */ }
   }
 
+  // One & Done: next un-started major this season + the user's golfer history
+  let oneDone: {
+    tournament: { id: string; name: string; startsAt: string } | null;
+    field: { golferId: string; name: string; country: string }[];
+    usedGolfers: { golferId: string; name: string; tournament: string }[];
+    existingGolferId: string | null;
+  } | null = null;
+
+  if (pool.gameType === "GOLF_ONE_DONE") {
+    const majors = await prisma.golfTournament.findMany({
+      where: { season: pool.season },
+      orderBy: { startsAt: "asc" },
+      include: { field: { include: { golfer: true } } },
+    });
+
+    const target = majors.find((t) => new Date(t.startsAt) > new Date()) ?? null;
+    const majorName = new Map(majors.map((t) => [t.id, t.name]));
+
+    const usedGolfers = userEntry.picks
+      .filter((p) => p.periodKey !== target?.id)
+      .flatMap((p) => {
+        try {
+          const payload = JSON.parse(p.payloadJson) as { golferId?: string; golferName?: string };
+          return payload.golferId
+            ? [{ golferId: payload.golferId, name: payload.golferName ?? "?", tournament: majorName.get(p.periodKey) ?? p.periodKey }]
+            : [];
+        } catch {
+          return [];
+        }
+      });
+
+    let existingGolferId: string | null = null;
+    const targetPick = target ? userEntry.picks.find((p) => p.periodKey === target.id) : null;
+    if (targetPick) {
+      try {
+        existingGolferId = (JSON.parse(targetPick.payloadJson) as { golferId?: string }).golferId ?? null;
+      } catch { /* */ }
+    }
+
+    oneDone = {
+      tournament: target
+        ? { id: target.id, name: target.name, startsAt: target.startsAt.toISOString() }
+        : null,
+      field: (target?.field ?? []).map((f) => ({
+        golferId: f.golferId,
+        name: f.golfer.name,
+        country: f.golfer.country,
+      })),
+      usedGolfers,
+      existingGolferId,
+    };
+  }
+
   return (
     <AppShell>
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="mb-6">
           <p className="text-xs font-bold tracking-[0.15em] uppercase mb-1" style={{ color: "var(--color-text-dim)" }}>
-            {pool.name} · Week {weekNumber}
+            {pool.gameType === "GOLF_ONE_DONE"
+              ? `${pool.name}${oneDone?.tournament ? ` · ${oneDone.tournament.name}` : ""}`
+              : `${pool.name} · Week ${weekNumber}`}
           </p>
           <h1 className="text-headline text-2xl" style={{ color: "var(--color-text)" }}>
-            {pool.gameType === "NFL_SURVIVOR" ? "Survivor Pick" : "Weekly Picks"}
+            {pool.gameType === "NFL_SURVIVOR"
+              ? "Survivor Pick"
+              : pool.gameType === "GOLF_ONE_DONE"
+              ? "One & Done Pick"
+              : "Weekly Picks"}
           </h1>
         </div>
 
@@ -147,6 +207,16 @@ export default async function PicksPage({
             existingPicks={existingPickemPicks}
             existingTiebreaker={existingTiebreaker}
             poolId={id}
+          />
+        )}
+
+        {pool.gameType === "GOLF_ONE_DONE" && oneDone && (
+          <OneDonePicksClient
+            entryId={userEntry.id}
+            tournament={oneDone.tournament}
+            field={oneDone.field}
+            usedGolfers={oneDone.usedGolfers}
+            existingGolferId={oneDone.existingGolferId}
           />
         )}
       </div>

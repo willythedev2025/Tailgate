@@ -165,6 +165,85 @@ export async function submitPickemPicks(
   return { ok: true, lockedCount };
 }
 
+// ── submitOneAndDonePick ──────────────────────────────────────────────────────
+
+const OneAndDonePickSchema = z.object({
+  entryId: z.string().min(1),
+  tournamentId: z.string().min(1),
+  golferId: z.string().min(1),
+});
+
+export async function submitOneAndDonePick(
+  entryId: string,
+  tournamentId: string,
+  golferId: string
+): Promise<{ ok: true }> {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const input = OneAndDonePickSchema.parse({ entryId, tournamentId, golferId });
+
+  const entry = await prisma.entry.findUnique({
+    where: { id: input.entryId },
+    include: { picks: true, pool: true },
+  });
+  if (!entry) throw new Error("Entry not found");
+  if (entry.userId !== session.user.id) throw new Error("Forbidden");
+  if (entry.pool.gameType !== "GOLF_ONE_DONE") throw new Error("Wrong pool type");
+
+  const tournament = await prisma.golfTournament.findUnique({
+    where: { id: input.tournamentId },
+    include: { field: { where: { golferId: input.golferId } } },
+  });
+  if (!tournament) throw new Error("Tournament not found");
+  if (new Date(tournament.startsAt) <= new Date()) {
+    throw new Error("That tournament has already started — pick is locked");
+  }
+  // Allow picking before the field is announced only if the golfer exists at all;
+  // once the field is published, the golfer must be in it.
+  const fieldSize = await prisma.golfTournamentField.count({
+    where: { tournamentId: tournament.id },
+  });
+  if (fieldSize > 0 && tournament.field.length === 0) {
+    throw new Error("That golfer is not in the field");
+  }
+
+  // One golfer per season — no reuse
+  const usedGolferIds = entry.picks
+    .filter((p) => p.periodKey !== input.tournamentId)
+    .flatMap((p) => {
+      try {
+        const payload = JSON.parse(p.payloadJson) as { golferId?: string };
+        return payload.golferId ? [payload.golferId] : [];
+      } catch {
+        return [];
+      }
+    });
+  if (usedGolferIds.includes(input.golferId)) {
+    throw new Error("You already used that golfer this season");
+  }
+
+  const golfer = await prisma.golfer.findUnique({ where: { id: input.golferId } });
+  if (!golfer) throw new Error("Golfer not found");
+
+  await prisma.pick.upsert({
+    where: { entryId_periodKey: { entryId: input.entryId, periodKey: input.tournamentId } },
+    create: {
+      entryId: input.entryId,
+      periodKey: input.tournamentId,
+      payloadJson: JSON.stringify({ golferId: input.golferId, golferName: golfer.name }),
+      result: "PENDING",
+    },
+    update: {
+      payloadJson: JSON.stringify({ golferId: input.golferId, golferName: golfer.name }),
+      result: "PENDING",
+      lockedAt: null,
+    },
+  });
+
+  return { ok: true };
+}
+
 // ── joinGroupViaInvite ────────────────────────────────────────────────────────
 
 const JoinInviteSchema = z.object({

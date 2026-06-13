@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { calcEntryTotal, rankEntries, calcPayouts } from "@/lib/scoring";
 import type { EntryGolfer, EntryResult } from "@/lib/scoring";
+import { scoreOneAndDoneEntry } from "@/lib/scoring/one-done";
 import { scoreToDisplay } from "@/lib/utils";
 
 function getCurrentWeekNumber(): number {
@@ -77,6 +78,10 @@ export default async function StandingsPage({
         {pool.gameType === "GOLF_MAJOR" && (
           <GolfStandings pool={pool} />
         )}
+
+        {pool.gameType === "GOLF_ONE_DONE" && (
+          <OneDoneStandings pool={pool} />
+        )}
       </div>
     </AppShell>
   );
@@ -97,6 +102,108 @@ type PoolData = NonNullable<Awaited<ReturnType<typeof prisma.pool.findUnique>>> 
   }>;
   group: { slug: string; name: string; members: { userId: string; role: string }[] };
 };
+
+// ── One & Done standings ──────────────────────────────────────────────────────
+
+async function OneDoneStandings({ pool }: { pool: PoolData }) {
+  const tournaments = await prisma.golfTournament.findMany({
+    where: { season: pool.season },
+    orderBy: { startsAt: "asc" },
+    include: { scores: true },
+  });
+
+  const oneDoneTournaments = tournaments.map((t) => ({
+    id: t.id,
+    name: t.name,
+    startsAt: t.startsAt,
+    status: t.status,
+    scores: t.scores.map((s) => ({ golferId: s.golferId, total: s.total, status: s.status })),
+  }));
+
+  const ranked = pool.entries
+    .map((entry) => {
+      const { total, results } = scoreOneAndDoneEntry(entry.picks, oneDoneTournaments);
+      return { entry, total, results };
+    })
+    .sort((a, b) => a.total - b.total);
+
+  return (
+    <div className="space-y-6">
+      <div
+        className="rounded-xl border overflow-hidden"
+        style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+      >
+        {/* Header row */}
+        <div
+          className="flex items-center gap-3 px-4 py-2 border-b text-[10px] font-bold uppercase tracking-wider"
+          style={{ borderColor: "var(--color-border)", color: "var(--color-text-dim)" }}
+        >
+          <span className="w-5" />
+          <span className="flex-1">Entry</span>
+          {oneDoneTournaments.map((t) => (
+            <span key={t.id} className="w-14 text-center hidden sm:block">
+              {t.name.split(" ")[0]}
+            </span>
+          ))}
+          <span className="w-12 text-right">Total</span>
+        </div>
+
+        {ranked.map(({ entry, total, results }, i) => (
+          <div
+            key={entry.id}
+            className="flex items-center gap-3 px-4 py-3 border-b last:border-0"
+            style={{ borderColor: "var(--color-border)" }}
+          >
+            <span
+              className="font-black text-sm w-5 tabular text-center"
+              style={{ color: i === 0 ? "var(--color-gold)" : "var(--color-text-dim)" }}
+            >
+              {i + 1}
+            </span>
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-semibold block truncate" style={{ color: "var(--color-text)" }}>
+                {entry.entryName}
+              </span>
+            </div>
+            {results.map((r) => (
+              <span
+                key={r.tournamentId}
+                className="w-14 text-center text-xs tabular hidden sm:block"
+                style={{
+                  color: r.penalized
+                    ? "var(--color-red)"
+                    : r.score !== null && r.score < 0
+                    ? "var(--color-green)"
+                    : "var(--color-text-muted)",
+                }}
+                title={r.golferName ?? undefined}
+              >
+                {r.score === null ? "—" : scoreToDisplay(r.score)}
+              </span>
+            ))}
+            <span
+              className="w-12 text-right font-black text-sm tabular"
+              style={{ color: i === 0 ? "var(--color-gold)" : "var(--color-text)" }}
+            >
+              {scoreToDisplay(total)}
+            </span>
+          </div>
+        ))}
+
+        {ranked.length === 0 && (
+          <p className="px-4 py-6 text-sm text-center" style={{ color: "var(--color-text-muted)" }}>
+            No entries yet.
+          </p>
+        )}
+      </div>
+
+      <p className="text-xs" style={{ color: "var(--color-text-dim)" }}>
+        Lowest season total wins. Each golfer can only be used once. Missed cut,
+        WD, or no pick on a finished major scores the field&apos;s worst finish +2.
+      </p>
+    </div>
+  );
+}
 
 // ── Pick'em standings ─────────────────────────────────────────────────────────
 

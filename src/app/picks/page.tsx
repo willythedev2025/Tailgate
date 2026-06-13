@@ -33,10 +33,29 @@ export default async function PicksPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  const items = entries.map((entry) => {
-    const periodKey = entry.pool.gameType === "GOLF_MAJOR" ? "tournament" : weekKey;
+  // One & Done pools key picks by tournament id — find each season's next major
+  const upcomingMajors = await prisma.golfTournament.findMany({
+    where: { startsAt: { gt: new Date() } },
+    orderBy: { startsAt: "asc" },
+  });
+  const nextMajorBySeason = new Map<number, string>();
+  for (const t of upcomingMajors) {
+    if (!nextMajorBySeason.has(t.season)) nextMajorBySeason.set(t.season, t.id);
+  }
+
+  const items = entries.flatMap((entry) => {
+    let periodKey: string;
+    if (entry.pool.gameType === "GOLF_MAJOR") {
+      periodKey = "tournament";
+    } else if (entry.pool.gameType === "GOLF_ONE_DONE") {
+      const next = nextMajorBySeason.get(entry.pool.season);
+      if (!next) return []; // season's majors are done — nothing due
+      periodKey = next;
+    } else {
+      periodKey = weekKey;
+    }
     const hasPick = entry.picks.some((p) => p.periodKey === periodKey);
-    return { entry, hasPick };
+    return [{ entry, hasPick }];
   });
 
   const needPicks = items.filter((i) => !i.hasPick);

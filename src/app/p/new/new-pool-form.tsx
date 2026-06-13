@@ -17,42 +17,72 @@ interface NewPoolFormProps {
   seasonsBySport: Record<string, number[]>;
 }
 
-const GAME_TYPES = [
-  {
-    value: "NFL_PICKEM",
-    sport: "NFL",
-    emoji: "🏈",
-    label: "NFL Pick'em",
-    description: "Pick every game each week. Most wins takes it.",
-  },
-  {
-    value: "NFL_SURVIVOR",
-    sport: "NFL",
-    emoji: "💀",
-    label: "NFL Survivor",
-    description: "One team a week, no repeats. Lose once and you're out.",
-  },
-  {
-    value: "CFB_PICKEM",
-    sport: "CFB",
-    emoji: "🎓",
-    label: "CFB Pick'em",
-    description: "College football slate picks, week by week.",
-  },
-  {
-    value: "GOLF_MAJOR",
-    sport: "GOLF",
-    emoji: "⛳",
-    label: "Golf Major",
-    description: "Draft a lineup of golfers for a major. Lowest total wins.",
-  },
+const SPORTS = [
+  { value: "NFL", emoji: "🏈", label: "NFL" },
+  { value: "CFB", emoji: "🎓", label: "College Football" },
+  { value: "GOLF", emoji: "⛳", label: "Golf" },
 ] as const;
+
+interface GameStyle {
+  value: string;
+  label: string;
+  description: string;
+  comingSoon?: boolean;
+}
+
+const GAME_STYLES: Record<string, GameStyle[]> = {
+  NFL: [
+    {
+      value: "NFL_PICKEM",
+      label: "Pick'em",
+      description: "Pick every game each week. Best bet doubles points. Most wins takes it.",
+    },
+    {
+      value: "NFL_SURVIVOR",
+      label: "Survivor",
+      description: "One team a week, no repeats. Lose once and you're out.",
+    },
+    {
+      value: "QUICKPICKS",
+      label: "QuickPicks",
+      description: "Player-prop matchups against your friends.",
+      comingSoon: true,
+    },
+  ],
+  CFB: [
+    {
+      value: "CFB_PICKEM",
+      label: "Pick'em",
+      description: "College football slate picks, week by week.",
+    },
+  ],
+  GOLF: [
+    {
+      value: "GOLF_MAJOR",
+      label: "Major Lineup",
+      description: "Draft 4 golfers with weighted scoring for one major. A missed cut knocks you out.",
+    },
+    {
+      value: "GOLF_ONE_DONE",
+      label: "One & Done",
+      description: "One golfer per major, each usable once all season. Lowest total to par wins.",
+    },
+    {
+      value: "GOLF_TIERS",
+      label: "Tiers",
+      description: "Build a lineup with one golfer from each tier.",
+      comingSoon: true,
+    },
+  ],
+};
 
 const CURRENT_YEAR = new Date().getFullYear();
 
 export function NewPoolForm({ groups, defaultGroupId, seasonsBySport }: NewPoolFormProps) {
   const [groupId, setGroupId] = useState(defaultGroupId);
+  const [sport, setSport] = useState<string | null>(null);
   const [gameType, setGameType] = useState<string | null>(null);
+  const [gameLabel, setGameLabel] = useState<string>("");
   const [name, setName] = useState("");
   const [nameTouched, setNameTouched] = useState(false);
   const [season, setSeason] = useState<number>(CURRENT_YEAR);
@@ -61,24 +91,33 @@ export function NewPoolForm({ groups, defaultGroupId, seasonsBySport }: NewPoolF
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  const selectedType = GAME_TYPES.find((t) => t.value === gameType) ?? null;
-  const seasonOptions = selectedType
-    ? [...new Set([...(seasonsBySport[selectedType.sport] ?? []), CURRENT_YEAR])].sort((a, b) => b - a)
+  const seasonOptions = sport
+    ? [...new Set([...(seasonsBySport[sport] ?? []), CURRENT_YEAR])].sort((a, b) => b - a)
     : [CURRENT_YEAR];
 
-  const handleSelectType = (type: (typeof GAME_TYPES)[number]) => {
-    setGameType(type.value);
-    const availableSeasons = seasonsBySport[type.sport] ?? [];
-    const nextSeason = availableSeasons[0] ?? CURRENT_YEAR;
-    setSeason(nextSeason);
-    if (!nameTouched) setName(`${nextSeason} ${type.label}`);
+  const handleSelectSport = (value: string) => {
+    setSport(value);
+    setGameType(null);
+    const availableSeasons = seasonsBySport[value] ?? [];
+    setSeason(availableSeasons[0] ?? CURRENT_YEAR);
+    setError(null);
+  };
+
+  const handleSelectStyle = (style: GameStyle) => {
+    if (style.comingSoon) return;
+    setGameType(style.value);
+    setGameLabel(style.label);
+    if (!nameTouched) {
+      const sportLabel = SPORTS.find((s) => s.value === sport)?.label ?? sport;
+      setName(`${season} ${sport === "GOLF" ? "" : `${sportLabel} `}${style.label}`.replace(/\s+/g, " "));
+    }
     setError(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!gameType) {
-      setError("Pick a game type first");
+      setError("Pick a game style first");
       return;
     }
     if (!name.trim()) {
@@ -132,29 +171,26 @@ export function NewPoolForm({ groups, defaultGroupId, seasonsBySport }: NewPoolF
         </div>
       )}
 
-      {/* Game type cards */}
+      {/* Step 1 — sport */}
       <div>
-        <label className="text-label block mb-2">Game type</label>
-        <div className="grid sm:grid-cols-2 gap-3">
-          {GAME_TYPES.map((type) => {
-            const isSelected = gameType === type.value;
+        <label className="text-label block mb-2">1 · Select a sport</label>
+        <div className="grid grid-cols-3 gap-3">
+          {SPORTS.map((s) => {
+            const isSelected = sport === s.value;
             return (
               <button
-                key={type.value}
+                key={s.value}
                 type="button"
-                onClick={() => handleSelectType(type)}
-                className="text-left rounded-xl p-4 transition-all"
+                onClick={() => handleSelectSport(s.value)}
+                className="rounded-xl py-4 px-2 text-center transition-all"
                 style={{
                   backgroundColor: isSelected ? "var(--color-surface-2)" : "var(--color-surface)",
                   border: `2px solid ${isSelected ? "var(--color-accent)" : "var(--color-border)"}`,
                 }}
               >
-                <div className="text-2xl mb-2">{type.emoji}</div>
-                <p className="font-black text-sm mb-1" style={{ color: "var(--color-text)" }}>
-                  {type.label}
-                </p>
-                <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
-                  {type.description}
+                <div className="text-2xl mb-1">{s.emoji}</div>
+                <p className="font-bold text-xs" style={{ color: "var(--color-text)" }}>
+                  {s.label}
                 </p>
               </button>
             );
@@ -162,12 +198,64 @@ export function NewPoolForm({ groups, defaultGroupId, seasonsBySport }: NewPoolF
         </div>
       </div>
 
+      {/* Step 2 — game style */}
+      {sport && (
+        <div>
+          <label className="text-label block mb-2">2 · Select a game style</label>
+          <div className="space-y-2">
+            {(GAME_STYLES[sport] ?? []).map((style) => {
+              const isSelected = gameType === style.value;
+              return (
+                <button
+                  key={style.value}
+                  type="button"
+                  disabled={style.comingSoon}
+                  onClick={() => handleSelectStyle(style)}
+                  className="w-full text-left rounded-xl px-4 py-3.5 transition-all flex items-center gap-4 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: isSelected ? "var(--color-surface-2)" : "var(--color-surface)",
+                    border: `2px solid ${isSelected ? "var(--color-accent)" : "var(--color-border)"}`,
+                    opacity: style.comingSoon ? 0.55 : 1,
+                  }}
+                >
+                  <span
+                    className="w-4 h-4 rounded-full border-2 shrink-0"
+                    style={{
+                      borderColor: isSelected ? "var(--color-accent)" : "var(--color-muted)",
+                      backgroundColor: isSelected ? "var(--color-accent)" : "transparent",
+                    }}
+                  />
+                  <span className="flex-1 min-w-0">
+                    <span className="flex items-center gap-2">
+                      <span className="font-black text-sm" style={{ color: "var(--color-text)" }}>
+                        {style.label}
+                      </span>
+                      {style.comingSoon && (
+                        <span
+                          className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"
+                          style={{ backgroundColor: "var(--color-surface-2)", color: "var(--color-gold)" }}
+                        >
+                          Coming soon
+                        </span>
+                      )}
+                    </span>
+                    <span className="block text-xs mt-0.5 leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+                      {style.description}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Step 3 — details */}
       {gameType && (
         <>
-          {/* Name */}
           <div>
             <label htmlFor="pool-name" className="text-label block mb-2">
-              Pool name
+              3 · Name it
             </label>
             <input
               id="pool-name"
@@ -183,7 +271,6 @@ export function NewPoolForm({ groups, defaultGroupId, seasonsBySport }: NewPoolF
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {/* Season */}
             <div>
               <label htmlFor="pool-season" className="text-label block mb-2">
                 Season
@@ -198,15 +285,12 @@ export function NewPoolForm({ groups, defaultGroupId, seasonsBySport }: NewPoolF
                 {seasonOptions.map((s) => (
                   <option key={s} value={s}>
                     {s}
-                    {(seasonsBySport[selectedType?.sport ?? ""] ?? []).includes(s)
-                      ? ""
-                      : " (no schedule yet)"}
+                    {(seasonsBySport[sport ?? ""] ?? []).includes(s) ? "" : " (no schedule yet)"}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Entry fee display */}
             <div>
               <label htmlFor="pool-fee" className="text-label block mb-2">
                 Entry fee <span style={{ color: "var(--color-text-dim)" }}>(optional)</span>
@@ -243,7 +327,7 @@ export function NewPoolForm({ groups, defaultGroupId, seasonsBySport }: NewPoolF
         disabled={!gameType}
         className="w-full"
       >
-        Create pool
+        Create {gameLabel || "pool"}
       </Button>
     </form>
   );
