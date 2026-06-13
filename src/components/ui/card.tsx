@@ -11,7 +11,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     <div
       ref={ref}
       className={cn(
-        "bg-[#14171C] border border-[#252A33] rounded-[var(--radius-lg)] overflow-hidden",
+        "bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden shadow-[0_1px_3px_rgba(28,36,51,0.06)]",
         glow && "shadow-[0_0_20px_-4px_var(--color-accent)] border-[var(--color-accent)]/30",
         clickable &&
           "cursor-pointer transition-all duration-150 hover:border-[var(--color-muted)] hover:bg-[var(--color-surface-2)] active:scale-[0.995]",
@@ -31,7 +31,7 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
   ({ className, children, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("flex items-center justify-between px-4 py-3 border-b border-[#252A33]", className)}
+      className={cn("flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]", className)}
       {...props}
     >
       {children}
@@ -72,7 +72,7 @@ export const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
   ({ className, children, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("px-4 py-3 border-t border-[#252A33] flex items-center gap-3", className)}
+      className={cn("px-4 py-3 border-t border-[var(--color-border)] flex items-center gap-3", className)}
       {...props}
     >
       {children}

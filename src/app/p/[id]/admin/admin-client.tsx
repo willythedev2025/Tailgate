@@ -509,7 +509,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
       onClick={handleCopy}
       className="text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-lg transition-colors"
       style={{
-        backgroundColor: copied ? "rgba(46,204,113,0.1)" : "var(--color-surface-2)",
+        backgroundColor: copied ? "rgba(46,107,79,0.1)" : "var(--color-surface-2)",
         color: copied ? "var(--color-green)" : "var(--color-text-muted)",
       }}
     >
@@ -554,7 +554,7 @@ function SimulateSection({ poolId, games }: { poolId: string; games: Game[] }) {
       <CardContent className="pt-2 space-y-3">
         <div
           className="rounded-lg border px-4 py-3"
-          style={{ borderColor: "rgba(255,180,46,0.3)", backgroundColor: "rgba(255,180,46,0.05)" }}
+          style={{ borderColor: "rgba(164,133,58,0.3)", backgroundColor: "rgba(164,133,58,0.05)" }}
         >
           <p className="text-xs font-bold mb-2" style={{ color: "var(--color-gold)" }}>
             ⚠️ Development only

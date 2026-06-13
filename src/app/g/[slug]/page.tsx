@@ -79,7 +79,7 @@ export default async function GroupPage({ params }: { params: Promise<{ slug: st
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-2">
-                <h1 className="text-headline text-2xl text-white">{group.name}</h1>
+                <h1 className="text-headline text-2xl" style={{ color: "var(--color-text)" }}>{group.name}</h1>
                 {isCommissioner && <Badge variant="commissioner">Commissioner</Badge>}
               </div>
               <div className="flex items-center gap-3">
@@ -91,7 +91,7 @@ export default async function GroupPage({ params }: { params: Promise<{ slug: st
             </div>
             {isCommissioner && (
               <div className="flex items-center gap-2 shrink-0">
-                <Link href={`/join/${group.id}`}>
+                <Link href={`/g/${group.slug}/invite`}>
                   <Button variant="secondary" size="sm">Invite</Button>
                 </Link>
                 <Link href={`/p/new?groupId=${group.id}`}>
@@ -122,7 +122,7 @@ export default async function GroupPage({ params }: { params: Promise<{ slug: st
               className="rounded-xl border px-6 py-12 text-center"
               style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-surface)" }}
             >
-              <p className="text-sm mb-1 font-bold text-white">No active pools</p>
+              <p className="text-sm mb-1 font-bold" style={{ color: "var(--color-text)" }}>No active pools</p>
               <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                 {isCommissioner
                   ? "Create your first pool to get started."
@@ -161,7 +161,7 @@ export default async function GroupPage({ params }: { params: Promise<{ slug: st
                               {isLive ? "● LIVE" : statusInfo.label}
                             </span>
                           </div>
-                          <p className="font-black text-sm text-white">{pool.name}</p>
+                          <p className="font-black text-sm" style={{ color: "var(--color-text)" }}>{pool.name}</p>
                           <p className="text-xs mt-0.5" style={{ color: "var(--color-text-dim)" }}>
                             {pool._count.entries} {pool._count.entries === 1 ? "entry" : "entries"}
                           </p>
@@ -201,7 +201,7 @@ export default async function GroupPage({ params }: { params: Promise<{ slug: st
                     {(m.user.name ?? "?")[0]}
                   </div>
                 )}
-                <span className="text-sm font-semibold text-white flex-1">{m.user.name ?? m.user.email}</span>
+                <span className="text-sm font-semibold flex-1" style={{ color: "var(--color-text)" }}>{m.user.name ?? m.user.email}</span>
                 {m.role === "COMMISSIONER" && (
                   <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--color-gold)" }}>
                     Commissioner

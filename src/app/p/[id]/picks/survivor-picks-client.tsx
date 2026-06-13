@@ -101,7 +101,7 @@ export function SurvivorPicksClient({
             )}
             style={{
               borderColor: "var(--color-green)",
-              backgroundColor: "rgba(46,204,113,0.08)",
+              backgroundColor: "rgba(46,107,79,0.08)",
               color: "var(--color-green)",
             }}
           >

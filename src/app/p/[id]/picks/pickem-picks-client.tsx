@@ -197,7 +197,7 @@ export function PickemPicksClient({
       {success ? (
         <div
           className="rounded-xl border-2 px-6 py-4 text-center font-black text-lg pick-stamp"
-          style={{ borderColor: "var(--color-green)", color: "var(--color-green)", backgroundColor: "rgba(46,204,113,0.07)" }}
+          style={{ borderColor: "var(--color-green)", color: "var(--color-green)", backgroundColor: "rgba(46,107,79,0.07)" }}
         >
           ✓ Picks submitted!
         </div>

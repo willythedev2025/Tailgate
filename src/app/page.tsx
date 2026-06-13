@@ -20,22 +20,21 @@ export default async function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--color-bg)", color: "var(--color-text)" }}>
 
-      {/* ESPN-style top red bar */}
-      <div style={{ backgroundColor: "var(--color-accent)", height: "4px", width: "100%" }} />
+      {/* Gold trim bar */}
+      <div style={{ backgroundColor: "var(--color-gold)", height: "3px", width: "100%" }} />
 
-      {/* Header */}
+      {/* Header — navy masthead */}
       <header
         className="flex items-center justify-between px-6 py-4"
-        style={{ backgroundColor: "#0d0f12", borderBottom: "1px solid var(--color-border)" }}
+        style={{ backgroundColor: "var(--color-ink)", borderBottom: "1px solid var(--color-ink-2)" }}
       >
-        <span className="text-headline text-2xl tracking-tight font-black" style={{ color: "#fff" }}>
-          CLUB<span style={{ color: "var(--color-accent)" }}>HOUSE</span>
+        <span className="text-headline text-2xl" style={{ color: "#fff" }}>
+          CLUB<span style={{ color: "var(--color-gold)" }}>HOUSE</span>
         </span>
         <div className="flex items-center gap-4">
           <Link
             href="/login"
-            className="text-xs font-bold uppercase tracking-widest transition-colors"
-            style={{ color: "var(--color-text-dim)" }}
+            className="text-xs font-bold uppercase tracking-widest transition-colors text-white/60 hover:text-white"
           >
             Sign In
           </Link>
@@ -60,13 +59,13 @@ export default async function LandingPage() {
         <div
           className="absolute inset-0"
           style={{
-            background: "linear-gradient(90deg, rgba(11,13,16,0.92) 0%, rgba(11,13,16,0.6) 60%, rgba(11,13,16,0.2) 100%)",
+            background: "linear-gradient(90deg, rgba(15,26,49,0.93) 0%, rgba(15,26,49,0.62) 60%, rgba(15,26,49,0.22) 100%)",
           }}
         />
         <div className="relative flex flex-col px-8 md:px-16 max-w-2xl py-12">
           <p
             className="text-xs font-bold uppercase tracking-[0.2em] mb-4"
-            style={{ color: "var(--color-accent)" }}
+            style={{ color: "var(--color-gold)" }}
           >
             The #1 pools app for your crew
           </p>
@@ -127,7 +126,7 @@ export default async function LandingPage() {
           <p className="text-xs font-bold tracking-[0.2em] uppercase mb-2" style={{ color: "var(--color-text-dim)" }}>
             How you compete
           </p>
-          <h2 className="text-headline text-3xl md:text-4xl mb-10" style={{ color: "#fff" }}>
+          <h2 className="text-headline text-3xl md:text-4xl mb-10" style={{ color: "var(--color-text)" }}>
             THREE WAYS TO WIN
           </h2>
 
@@ -145,7 +144,7 @@ export default async function LandingPage() {
                 />
                 <div
                   className="absolute inset-0"
-                  style={{ background: "linear-gradient(0deg, rgba(11,13,16,0.95) 0%, rgba(11,13,16,0.4) 60%, transparent 100%)" }}
+                  style={{ background: "linear-gradient(0deg, rgba(15,26,49,0.95) 0%, rgba(15,26,49,0.4) 60%, transparent 100%)" }}
                 />
                 <div className="absolute bottom-0 left-0 right-0 p-5">
                   <div
@@ -174,7 +173,7 @@ export default async function LandingPage() {
           <p className="text-xs font-bold tracking-[0.2em] uppercase mb-2 text-center" style={{ color: "var(--color-text-dim)" }}>
             Takes 60 seconds
           </p>
-          <h2 className="text-headline text-3xl md:text-4xl mb-10 text-center text-white">HOW IT WORKS</h2>
+          <h2 className="text-headline text-3xl md:text-4xl mb-10 text-center" style={{ color: "var(--color-text)" }}>HOW IT WORKS</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               { step: "01", title: "Create a pool",   desc: "Pick your game type and set your rules. Name it something your crew will remember." },
@@ -183,7 +182,7 @@ export default async function LandingPage() {
             ].map((s) => (
               <div key={s.step}>
                 <div className="text-4xl font-black mb-3 tabular" style={{ color: "var(--color-accent)", opacity: 0.5 }}>{s.step}</div>
-                <h3 className="font-black uppercase tracking-tight text-base text-white mb-2">{s.title}</h3>
+                <h3 className="font-black uppercase tracking-tight text-base mb-2" style={{ color: "var(--color-text)" }}>{s.title}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-muted)" }}>{s.desc}</p>
               </div>
             ))}

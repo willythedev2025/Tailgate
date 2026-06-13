@@ -16,13 +16,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           "inline-flex items-center justify-center gap-2 font-semibold rounded-[var(--radius-md)] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg)] disabled:opacity-50 disabled:cursor-not-allowed select-none",
           {
-            "bg-[var(--color-accent)] text-white hover:bg-[#c40d26] active:scale-[0.98] shadow-lg shadow-[var(--color-accent)]/20":
+            "bg-[var(--color-accent)] text-white hover:bg-[#172E58] active:scale-[0.98] shadow-md shadow-[var(--color-accent)]/15":
               variant === "primary",
             "bg-[var(--color-surface)] text-[var(--color-text)] border border-[var(--color-border)] hover:bg-[var(--color-surface-2)] hover:border-[var(--color-muted)] active:scale-[0.98]":
               variant === "secondary",
             "bg-transparent text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)] active:scale-[0.98]":
               variant === "ghost",
-            "bg-[var(--color-red)] text-white hover:bg-[#e03535] active:scale-[0.98] shadow-lg shadow-[var(--color-red)]/20":
+            "bg-[var(--color-red)] text-white hover:bg-[#8A2F2F] active:scale-[0.98] shadow-md shadow-[var(--color-red)]/15":
               variant === "danger",
           },
           {

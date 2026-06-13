@@ -1,40 +1,45 @@
-// ApiProvider — stubbed ESPN endpoint integration
-// Wire these up with a cron/route handler refresh pattern when ready.
-// ESPN public endpoints (no auth required, rate-limit gracefully):
-//   NFL schedule: https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week={week}&seasontype=2
-//   CFB schedule: https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?week={week}&groups=80
-//   Golf PGA:     https://site.api.espn.com/apis/site/v2/sports/golf/pga/leaderboard
+// ApiProvider — live ESPN integration (see espn.ts for endpoints/transforms)
 
 import type { SportsDataProvider, ScheduledGame, TournamentLeaderboard } from "./types";
+import { fetchFootballWeek, fetchGolfEventDetail } from "./espn";
+import { prisma } from "@/lib/db";
 
 export class ApiProvider implements SportsDataProvider {
   async getNFLSchedule(season: number, week: number): Promise<ScheduledGame[]> {
-    // TODO: fetch from ESPN and transform
-    // const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${week}&seasontype=2`;
-    // const data = await fetch(url).then(r => r.json());
-    // return transformEspnNfl(data);
-    console.warn("[ApiProvider] getNFLSchedule not yet implemented — using stub");
-    return [];
+    return fetchFootballWeek("NFL", season, week);
   }
 
   async getCFBSchedule(season: number, week: number): Promise<ScheduledGame[]> {
-    // TODO: fetch from ESPN and transform
-    console.warn("[ApiProvider] getCFBSchedule not yet implemented — using stub");
-    return [];
+    return fetchFootballWeek("CFB", season, week);
   }
 
-  async getGolfLeaderboard(_tournamentId: string): Promise<TournamentLeaderboard | null> {
-    // TODO: fetch PGA leaderboard and transform
-    console.warn("[ApiProvider] getGolfLeaderboard not yet implemented — using stub");
-    return null;
+  async getGolfLeaderboard(tournamentId: string): Promise<TournamentLeaderboard | null> {
+    const tournament = await prisma.golfTournament.findUnique({ where: { id: tournamentId } });
+    if (!tournament || !tournament.id.startsWith("espn-")) return null;
+
+    const detail = await fetchGolfEventDetail(
+      tournament.id.replace("espn-", ""),
+      tournament.startsAt
+    );
+    if (!detail) return null;
+
+    return {
+      tournamentId,
+      name: tournament.name,
+      status: detail.status,
+      scores: detail.field.map((f) => ({
+        golferId: `espn-${f.espnId}`,
+        name: f.name,
+        total: f.totalToPar,
+        round1: f.rounds[0],
+        round2: f.rounds[1],
+        round3: f.rounds[2],
+        round4: f.rounds[3],
+        thruHole: null,
+        currentRound: f.rounds.filter((r) => r !== null).length || null,
+        status: f.status,
+        playoffWinner: false,
+      })),
+    };
   }
 }
-
-// Refresh route pattern (add a cron endpoint at /api/cron/refresh-scores):
-// export async function refreshNFLScores(week: number) {
-//   const provider = new ApiProvider();
-//   const games = await provider.getNFLSchedule(2025, week);
-//   for (const game of games) {
-//     await prisma.sportEvent.upsert({ where: { id: game.id }, update: { ... }, create: { ... } });
-//   }
-// }

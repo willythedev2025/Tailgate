@@ -12,14 +12,14 @@ export async function GET(
   const { type } = await params;
   const { searchParams } = req.nextUrl;
 
-  const bg = "#0B0D10";
-  const surface = "#14171C";
-  const accent = "#E8112D";
-  const gold = "#FFB52E";
-  const green = "#2ECC71";
-  const red = "#FF4D4D";
-  const text = "#F1F3F5";
-  const muted = "#8B95A4";
+  const bg = "#FAF8F4";
+  const surface = "#FFFFFF";
+  const accent = "#1E3A6E";
+  const gold = "#A4853A";
+  const green = "#2E6B4F";
+  const red = "#A23B3B";
+  const text = "#1C2433";
+  const muted = "#5F6678";
 
   const baseStyle = {
     display: "flex",
@@ -72,7 +72,7 @@ export async function GET(
               backgroundColor: surface,
               borderRadius: "12px",
               padding: "16px 24px",
-              border: i === 0 ? `2px solid ${gold}` : `1px solid #252A33`,
+              border: i === 0 ? `2px solid ${gold}` : `1px solid #E6E1D5`,
             }}>
               <span style={{ fontSize: i < 3 ? "28px" : "18px", minWidth: "36px" }}>{medals[i]}</span>
               <span style={{ color: text, fontWeight: 700, fontSize: "22px", flex: 1 }}>{e.name}</span>

@@ -1,5 +1,6 @@
-import { auth, signOut } from "@/lib/auth";
+﻿import { auth, signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { AppShell } from "@/components/layout/app-shell";
 
@@ -69,13 +70,17 @@ export default async function ProfilePage() {
         {user.entries.length > 0 && (
           <div className="card p-5">
             <h2 className="text-label mb-4">RECENT ENTRIES</h2>
-            <div className="space-y-3">
+            <div className="space-y-1">
               {user.entries.map((entry) => (
-                <div key={entry.id} className="flex items-center justify-between">
+                <Link
+                  key={entry.id}
+                  href={`/p/${entry.poolId}`}
+                  className="flex items-center justify-between px-2 py-2 -mx-2 rounded-lg transition-colors hover:bg-[var(--color-surface-2)]"
+                >
                   <div>
                     <span className="font-semibold">{entry.entryName}</span>
                     <span className="text-sm ml-2" style={{ color: "var(--color-text-muted)" }}>
-                      {entry.pool.name}
+                      {entry.pool.name} · {entry.pool.season}
                     </span>
                   </div>
                   <span
@@ -83,10 +88,10 @@ export default async function ProfilePage() {
                     style={{
                       backgroundColor:
                         entry.status === "ALIVE" || entry.status === "ACTIVE"
-                          ? "rgba(46,204,113,0.15)"
+                          ? "rgba(46,107,79,0.15)"
                           : entry.status === "ELIMINATED" || entry.status === "OUT"
-                          ? "rgba(255,77,77,0.15)"
-                          : "rgba(255,181,46,0.15)",
+                          ? "rgba(162,59,59,0.15)"
+                          : "rgba(164,133,58,0.15)",
                       color:
                         entry.status === "ALIVE" || entry.status === "ACTIVE"
                           ? "var(--color-green)"
@@ -97,7 +102,7 @@ export default async function ProfilePage() {
                   >
                     {entry.status}
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -115,7 +120,7 @@ export default async function ProfilePage() {
             <button
               type="submit"
               className="px-6 py-2 rounded-lg font-semibold text-sm transition-all hover:opacity-80"
-              style={{ backgroundColor: "rgba(255,77,77,0.15)", color: "var(--color-red)", border: "1px solid rgba(255,77,77,0.3)" }}
+              style={{ backgroundColor: "rgba(162,59,59,0.15)", color: "var(--color-red)", border: "1px solid rgba(162,59,59,0.3)" }}
             >
               Sign out
             </button>

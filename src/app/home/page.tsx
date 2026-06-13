@@ -163,7 +163,7 @@ export default async function HomePage() {
                 Create one or join with an invite link.
               </p>
               <div className="flex items-center justify-center gap-3">
-                <Link href="/login">
+                <Link href="/g/new">
                   <Button variant="primary" size="md">Create a group</Button>
                 </Link>
                 <Link href="/join">

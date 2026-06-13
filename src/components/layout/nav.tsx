@@ -59,20 +59,17 @@ export function Nav({ user }: NavProps) {
       <aside
         className="hidden lg:flex flex-col w-56 shrink-0 h-screen sticky top-0"
         style={{
-          backgroundColor: "#0d0f12",
-          borderRight: "1px solid var(--color-border)",
+          backgroundColor: "var(--color-ink)",
+          borderRight: "1px solid var(--color-ink-2)",
         }}
       >
         {/* Logo */}
         <div
           className="px-5 py-4"
-          style={{ borderBottom: "3px solid var(--color-accent)" }}
+          style={{ borderBottom: "2px solid var(--color-gold)" }}
         >
-          <span
-            className="text-headline text-2xl tracking-tight text-white"
-            style={{ fontWeight: 900, letterSpacing: "-0.03em" }}
-          >
-            CLUB<span style={{ color: "var(--color-accent)" }}>HOUSE</span>
+          <span className="text-headline text-2xl text-white">
+            CLUB<span style={{ color: "var(--color-gold)" }}>HOUSE</span>
           </span>
         </div>
 
@@ -87,8 +84,8 @@ export function Nav({ user }: NavProps) {
                 className={cn(
                   "px-5 py-3 text-xs font-bold uppercase tracking-widest transition-colors border-l-2",
                   active
-                    ? "border-[var(--color-accent)] text-white bg-white/5"
-                    : "border-transparent text-[var(--color-text-dim)] hover:text-white hover:bg-white/5"
+                    ? "border-[var(--color-gold)] text-white bg-white/5"
+                    : "border-transparent text-white/50 hover:text-white hover:bg-white/5"
                 )}
               >
                 {label}
@@ -100,7 +97,7 @@ export function Nav({ user }: NavProps) {
         {user && (
           <div
             className="px-4 py-3"
-            style={{ borderTop: "1px solid var(--color-border)" }}
+            style={{ borderTop: "1px solid var(--color-ink-2)" }}
           >
             <Link
               href="/profile"
@@ -109,7 +106,7 @@ export function Nav({ user }: NavProps) {
               <Avatar src={user.image} name={user.name} size="sm" />
               <div className="min-w-0">
                 <p className="text-sm font-bold text-white truncate">{user.name ?? "Profile"}</p>
-                <p className="text-[10px] uppercase tracking-widest" style={{ color: "var(--color-text-dim)" }}>
+                <p className="text-[10px] uppercase tracking-widest text-white/50">
                   Account
                 </p>
               </div>

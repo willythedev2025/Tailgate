@@ -160,7 +160,7 @@ export default async function JoinPage({
             <button
               type="submit"
               className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg font-semibold transition-all hover:opacity-90"
-              style={{ backgroundColor: "#fff", color: "#1a1a1a" }}
+              style={{ backgroundColor: "#fff", color: "#1a1a1a", border: "1px solid var(--color-border)" }}
             >
               <GoogleIcon />
               Join with Google

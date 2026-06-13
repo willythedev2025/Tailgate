@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PoolTicker } from "@/components/pools/pool-ticker";
 import { getTeam } from "@/lib/constants/teams";
 import { scoreToDisplay } from "@/lib/utils";
+import { EnterPoolButton } from "./enter-pool-button";
 
 function getCurrentWeekNumber(): number {
   const now = new Date();
@@ -84,6 +85,30 @@ export default async function PoolPage({
             {pool.group.name}
           </Link>
         </div>
+
+        {/* Enter pool banner */}
+        {!userEntry && ["OPEN", "LIVE"].includes(pool.status) && (
+          <div
+            className="rounded-xl border px-5 py-5 flex items-center justify-between gap-4"
+            style={{
+              backgroundColor: "var(--color-surface)",
+              borderColor: "var(--color-accent)",
+              boxShadow: "0 0 20px -6px rgba(30,58,110,0.2)",
+            }}
+          >
+            <div>
+              <p className="font-black text-sm" style={{ color: "var(--color-text)" }}>
+                You&apos;re not in this pool yet
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                {pool.entryFeeDisplay
+                  ? `Entry: ${pool.entryFeeDisplay} — settle up with your commissioner.`
+                  : "Jump in before it locks."}
+              </p>
+            </div>
+            <EnterPoolButton poolId={pool.id} />
+          </div>
+        )}
 
         {/* Game-type specific content */}
         {pool.gameType === "NFL_SURVIVOR" && (
@@ -206,8 +231,8 @@ function SurvivorPoolView({
               key={entry.id}
               className="flex flex-col items-center gap-1 p-3 rounded-lg border"
               style={{
-                backgroundColor: entry.userId === userId ? "rgba(46,204,113,0.05)" : "var(--color-surface)",
-                borderColor: entry.userId === userId ? "rgba(46,204,113,0.3)" : "var(--color-border)",
+                backgroundColor: entry.userId === userId ? "rgba(46,107,79,0.05)" : "var(--color-surface)",
+                borderColor: entry.userId === userId ? "rgba(46,107,79,0.3)" : "var(--color-border)",
               }}
             >
               <Avatar src={entry.user.image} name={entry.user.name} size="md" />
@@ -323,7 +348,7 @@ function PickemPoolView({
             backgroundColor: "var(--color-surface)",
             borderColor: "var(--color-accent)",
             borderWidth: "1px",
-            boxShadow: "0 0 20px -6px rgba(232,17,45,0.2)",
+            boxShadow: "0 0 20px -6px rgba(30,58,110,0.2)",
           }}
         >
           <div>
