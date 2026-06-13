@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { GameTypeTabs } from "@/components/landing/game-type-tabs";
 
 // Royalty-free Unsplash images — no watermarks, free to use
 const SPORT_IMAGES = {
@@ -120,122 +121,242 @@ export default async function LandingPage() {
         ))}
       </div>
 
-      {/* Game types — image cards */}
-      <section className="px-6 py-14 md:py-20">
+      {/* Sports categories */}
+      <section className="px-6 pt-12 pb-2">
         <div className="max-w-6xl mx-auto">
-          <p className="text-xs font-bold tracking-[0.2em] uppercase mb-2" style={{ color: "var(--color-text-dim)" }}>
-            How you compete
+          <p className="text-xs font-bold tracking-[0.2em] uppercase mb-4 text-center" style={{ color: "var(--color-text-dim)" }}>
+            Where you can play
           </p>
-          <h2 className="text-headline text-3xl md:text-4xl mb-10" style={{ color: "var(--color-text)" }}>
-            THREE WAYS TO WIN
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {GAME_CARDS.map((g) => (
-              <div
-                key={g.title}
-                className="relative rounded-xl overflow-hidden group cursor-pointer"
-                style={{ height: "280px" }}
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            {[
+              { emoji: "🏈", label: "NFL", live: true },
+              { emoji: "🎓", label: "College Football", live: true },
+              { emoji: "⛳", label: "Golf Majors", live: true },
+              { emoji: "🏀", label: "NBA", live: false },
+              { emoji: "🏆", label: "March Madness", live: false },
+              { emoji: "⚾", label: "MLB", live: false },
+            ].map((s) => (
+              <span
+                key={s.label}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold border"
+                style={{
+                  backgroundColor: "var(--color-surface)",
+                  borderColor: s.live ? "var(--color-gold)" : "var(--color-border)",
+                  color: s.live ? "var(--color-text)" : "var(--color-text-dim)",
+                }}
               >
-                <img
-                  src={g.image}
-                  alt={g.title}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div
-                  className="absolute inset-0"
-                  style={{ background: "linear-gradient(0deg, rgba(15,26,49,0.95) 0%, rgba(15,26,49,0.4) 60%, transparent 100%)" }}
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <div
-                    className="text-[10px] font-black uppercase tracking-widest mb-2 inline-block px-2 py-0.5 rounded"
-                    style={{ backgroundColor: g.color, color: "#fff" }}
-                  >
-                    {g.tag}
-                  </div>
-                  <h3 className="text-headline text-2xl text-white mb-1">{g.title}</h3>
-                  <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
-                    {g.desc}
-                  </p>
-                </div>
-              </div>
+                <span>{s.emoji}</span>
+                {s.label}
+                {s.live ? (
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "var(--color-gold)" }} />
+                ) : (
+                  <span className="text-[9px] uppercase tracking-widest" style={{ color: "var(--color-text-dim)" }}>
+                    Soon
+                  </span>
+                )}
+              </span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section
-        className="px-6 py-14"
-        style={{ backgroundColor: "var(--color-surface)", borderTop: "1px solid var(--color-border)", borderBottom: "1px solid var(--color-border)" }}
-      >
-        <div className="max-w-4xl mx-auto">
-          <p className="text-xs font-bold tracking-[0.2em] uppercase mb-2 text-center" style={{ color: "var(--color-text-dim)" }}>
-            Takes 60 seconds
+      {/* Game types — interactive carousel */}
+      <section id="games" className="px-6 py-12 md:py-16">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs font-bold tracking-[0.2em] uppercase mb-2" style={{ color: "var(--color-text-dim)" }}>
+            How you compete
           </p>
-          <h2 className="text-headline text-3xl md:text-4xl mb-10 text-center" style={{ color: "var(--color-text)" }}>HOW IT WORKS</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { step: "01", title: "Create a pool",   desc: "Pick your game type and set your rules. Name it something your crew will remember." },
-              { step: "02", title: "Invite your crew", desc: "Send one link via text. Friends join in one tap — no app download, no account required upfront." },
-              { step: "03", title: "Compete all season", desc: "Make picks each week, watch the standings update live, and settle up at the end." },
-            ].map((s) => (
-              <div key={s.step}>
-                <div className="text-4xl font-black mb-3 tabular" style={{ color: "var(--color-accent)", opacity: 0.5 }}>{s.step}</div>
-                <h3 className="font-black uppercase tracking-tight text-base mb-2" style={{ color: "var(--color-text)" }}>{s.title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-muted)" }}>{s.desc}</p>
-              </div>
-            ))}
+          <h2 className="text-headline text-3xl md:text-4xl mb-8" style={{ color: "var(--color-text)" }}>
+            PICK YOUR GAME
+          </h2>
+          <GameTypeTabs />
+        </div>
+      </section>
+
+      {/* Start a contest — commissioner band */}
+      <section className="px-6 py-14 md:py-20" style={{ backgroundColor: "var(--color-ink)" }}>
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <p className="text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ color: "var(--color-gold)" }}>
+              Commissioners
+            </p>
+            <h2 className="text-headline text-3xl md:text-4xl mb-4 text-white">
+              START A CONTEST
+            </h2>
+            <p className="text-sm leading-relaxed mb-8 max-w-md" style={{ color: "rgba(255,255,255,0.7)" }}>
+              Whether it&apos;s the family survivor pool or the office pick&apos;em,
+              Clubhouse makes running it painless — set the rules, send one link,
+              and let the standings take care of themselves.
+            </p>
+
+            <div className="space-y-6">
+              {[
+                {
+                  n: "1",
+                  title: "Start a contest & invite your crew",
+                  desc: "Choose your sport and game style, set the stakes, and share a single invite link or QR code.",
+                },
+                {
+                  n: "2",
+                  title: "Sweat it out together",
+                  desc: "Live scores sync in automatically. Standings, eliminations, and bragging rights update in real time.",
+                },
+                {
+                  n: "3",
+                  title: "Crown your winners",
+                  desc: "Final standings are indisputable. Settle up directly with your crew — Clubhouse never touches the money.",
+                },
+              ].map((s) => (
+                <div key={s.n} className="flex gap-4">
+                  <span
+                    className="w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shrink-0"
+                    style={{ backgroundColor: "var(--color-gold)", color: "var(--color-ink)" }}
+                  >
+                    {s.n}
+                  </span>
+                  <div>
+                    <h3 className="font-bold text-sm text-white mb-1">{s.title}</h3>
+                    <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
+                      {s.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-9">
+              <Link
+                href="/g/new"
+                className="inline-flex items-center justify-center px-8 py-3 text-sm font-black uppercase tracking-widest rounded transition-all hover:opacity-90"
+                style={{ backgroundColor: "var(--color-gold)", color: "var(--color-ink)" }}
+              >
+                Start a Contest
+              </Link>
+            </div>
           </div>
-          <div className="text-center mt-10">
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center px-10 py-3.5 text-sm font-black uppercase tracking-widest text-white rounded transition-all hover:opacity-90"
-              style={{ backgroundColor: "var(--color-accent)" }}
+
+          {/* Wizard mockup */}
+          <div className="hidden lg:flex justify-center">
+            <div
+              className="w-full max-w-sm rounded-2xl p-6 shadow-2xl"
+              style={{ backgroundColor: "var(--color-bg)", border: "1px solid var(--color-border)" }}
             >
-              Create Your Pool — It&apos;s Free
-            </Link>
+              <p className="text-headline text-lg mb-5" style={{ color: "var(--color-text)" }}>
+                PICK YOUR GAME
+              </p>
+
+              <p className="text-label mb-2">1 · Select a sport</p>
+              <div className="grid grid-cols-3 gap-2 mb-5">
+                {[
+                  { emoji: "🏈", label: "NFL", active: true },
+                  { emoji: "🎓", label: "CFB", active: false },
+                  { emoji: "⛳", label: "Golf", active: false },
+                ].map((s) => (
+                  <div
+                    key={s.label}
+                    className="rounded-lg py-3 text-center"
+                    style={{
+                      backgroundColor: s.active ? "var(--color-surface-2)" : "var(--color-surface)",
+                      border: `2px solid ${s.active ? "var(--color-accent)" : "var(--color-border)"}`,
+                    }}
+                  >
+                    <div className="text-xl">{s.emoji}</div>
+                    <p className="text-[10px] font-bold mt-0.5" style={{ color: "var(--color-text)" }}>{s.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-label mb-2">2 · Select a game style</p>
+              <div className="space-y-2">
+                {[
+                  { label: "Pick'em", desc: "Pick winners each week", active: true },
+                  { label: "Survivor", desc: "One team a week, no repeats", active: false },
+                ].map((g) => (
+                  <div
+                    key={g.label}
+                    className="rounded-lg px-3.5 py-3 flex items-center gap-3"
+                    style={{
+                      backgroundColor: g.active ? "var(--color-surface-2)" : "var(--color-surface)",
+                      border: `2px solid ${g.active ? "var(--color-accent)" : "var(--color-border)"}`,
+                    }}
+                  >
+                    <span
+                      className="w-3.5 h-3.5 rounded-full border-2 shrink-0"
+                      style={{
+                        borderColor: g.active ? "var(--color-accent)" : "var(--color-muted)",
+                        backgroundColor: g.active ? "var(--color-accent)" : "transparent",
+                      }}
+                    />
+                    <span>
+                      <span className="block text-xs font-black" style={{ color: "var(--color-text)" }}>{g.label}</span>
+                      <span className="block text-[10px]" style={{ color: "var(--color-text-muted)" }}>{g.desc}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div
+                className="mt-5 rounded-lg py-2.5 text-center text-xs font-black uppercase tracking-widest text-white"
+                style={{ backgroundColor: "var(--color-accent)" }}
+              >
+                Create Pick&apos;em
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer
-        className="px-6 py-8 text-center text-xs"
-        style={{ color: "var(--color-text-dim)" }}
-      >
-        <div className="mb-3">
-          <span className="font-black text-sm" style={{ color: "var(--color-text-muted)" }}>
-            CLUB<span style={{ color: "var(--color-accent)" }}>HOUSE</span>
-          </span>
+      <footer style={{ backgroundColor: "var(--color-surface)", borderTop: "1px solid var(--color-border)" }}>
+        <div className="max-w-6xl mx-auto px-6 py-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+            <div>
+              <span className="text-headline text-lg" style={{ color: "var(--color-text)" }}>
+                CLUB<span style={{ color: "var(--color-gold)" }}>HOUSE</span>
+              </span>
+              <p className="text-xs mt-3 leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+                Sports pools for your crew. Elegance meets sports.
+              </p>
+            </div>
+
+            <div>
+              <p className="text-label mb-3">Games</p>
+              <ul className="space-y-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+                <li><a href="#games" className="hover:underline">Pick&apos;em</a></li>
+                <li><a href="#games" className="hover:underline">Survivor</a></li>
+                <li><a href="#games" className="hover:underline">One &amp; Done</a></li>
+                <li><a href="#games" className="hover:underline">Golf Major</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="text-label mb-3">Get started</p>
+              <ul className="space-y-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+                <li><Link href="/g/new" className="hover:underline">Start a contest</Link></li>
+                <li><Link href="/join" className="hover:underline">Join with an invite</Link></li>
+                <li><Link href="/login" className="hover:underline">Sign in</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="text-label mb-3">The fine print</p>
+              <ul className="space-y-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+                <li>Clubhouse never handles money.</li>
+                <li>Settle up with your commissioner.</li>
+                <li>For entertainment purposes only.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div
+            className="pt-6 text-xs flex items-center justify-between flex-wrap gap-2"
+            style={{ borderTop: "1px solid var(--color-border)", color: "var(--color-text-dim)" }}
+          >
+            <span>© {new Date().getFullYear()} Clubhouse.</span>
+            <span>Play fair. Don&apos;t cry when you lose.</span>
+          </div>
         </div>
-        <p className="mb-1">Clubhouse doesn&apos;t handle money — settle up with your commissioner.</p>
-        <p>© {new Date().getFullYear()} Clubhouse. For entertainment purposes only.</p>
       </footer>
     </div>
   );
 }
-
-const GAME_CARDS = [
-  {
-    title: "Pick'em",
-    tag: "NFL · CFB",
-    color: "var(--color-gold)",
-    image: SPORT_IMAGES.pickem,
-    desc: "Pick every game straight up or against the spread. Best bet doubles your points. Weekly winner and season standings.",
-  },
-  {
-    title: "Survivor",
-    tag: "NFL",
-    color: "var(--color-accent)",
-    image: SPORT_IMAGES.survivor,
-    desc: "One team per week. Use each team once. Last entry alive takes the pot.",
-  },
-  {
-    title: "Golf Majors",
-    tag: "Masters · US Open · The Open · PGA",
-    color: "var(--color-green)",
-    image: SPORT_IMAGES.golf,
-    desc: "Draft 4 golfers with weighted scoring. If your guy misses the cut, your entry is OUT. Track live leaderboards.",
-  },
-];
