@@ -35,12 +35,17 @@ const GAME_STYLES: Record<string, GameStyle[]> = {
     {
       value: "NFL_PICKEM",
       label: "Pick'em",
-      description: "Pick every game each week. Best bet doubles points. Most wins takes it.",
+      description: "Pick winners each week. Most correct picks takes it.",
     },
     {
       value: "NFL_SURVIVOR",
       label: "Survivor",
       description: "One team a week, no repeats. Lose once and you're out.",
+    },
+    {
+      value: "COMBO_PICKEM",
+      label: "NFL + CFB Combo Pick'em",
+      description: "One pool, both slates — pick winners across pro and college football.",
     },
     {
       value: "QUICKPICKS",
@@ -54,6 +59,11 @@ const GAME_STYLES: Record<string, GameStyle[]> = {
       value: "CFB_PICKEM",
       label: "Pick'em",
       description: "College football slate picks, week by week.",
+    },
+    {
+      value: "COMBO_PICKEM",
+      label: "NFL + CFB Combo Pick'em",
+      description: "One pool, both slates — pick winners across pro and college football.",
     },
   ],
   GOLF: [
@@ -87,6 +97,7 @@ export function NewPoolForm({ groups, defaultGroupId, seasonsBySport }: NewPoolF
   const [nameTouched, setNameTouched] = useState(false);
   const [season, setSeason] = useState<number>(CURRENT_YEAR);
   const [entryFee, setEntryFee] = useState("");
+  const [gamesPerWeek, setGamesPerWeek] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -133,6 +144,8 @@ export function NewPoolForm({ groups, defaultGroupId, seasonsBySport }: NewPoolF
           name: name.trim(),
           season,
           entryFeeDisplay: entryFee.trim() || undefined,
+          gamesPerWeek:
+            gamesPerWeek.trim() && Number(gamesPerWeek) > 0 ? Number(gamesPerWeek) : undefined,
         });
         router.push(`/p/${poolId}`);
       } catch (err) {
@@ -306,6 +319,28 @@ export function NewPoolForm({ groups, defaultGroupId, seasonsBySport }: NewPoolF
               />
             </div>
           </div>
+
+          {gameType.endsWith("PICKEM") && (
+            <div>
+              <label htmlFor="pool-gpw" className="text-label block mb-2">
+                Matchups per week <span style={{ color: "var(--color-text-dim)" }}>(optional)</span>
+              </label>
+              <input
+                id="pool-gpw"
+                type="number"
+                min={1}
+                max={30}
+                value={gamesPerWeek}
+                onChange={(e) => setGamesPerWeek(e.target.value)}
+                placeholder="Leave blank for the full slate"
+                className="w-full px-4 py-3 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                style={inputStyle}
+              />
+              <p className="text-xs mt-1.5" style={{ color: "var(--color-text-dim)" }}>
+                Players pick this many matchups from each week&apos;s board.
+              </p>
+            </div>
+          )}
 
           <p className="text-xs" style={{ color: "var(--color-text-dim)" }}>
             Clubhouse doesn&apos;t handle money — entry fee is display-only so everyone knows the stakes.

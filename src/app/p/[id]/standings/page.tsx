@@ -67,7 +67,7 @@ export default async function StandingsPage({
           </div>
         </div>
 
-        {(pool.gameType === "NFL_PICKEM" || pool.gameType === "CFB_PICKEM") && (
+        {["NFL_PICKEM", "CFB_PICKEM", "COMBO_PICKEM"].includes(pool.gameType) && (
           <PickemStandings pool={pool} currentWeek={currentWeek} />
         )}
 

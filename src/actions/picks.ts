@@ -94,7 +94,6 @@ const PickemPickSchema = z.object({
     z.object({
       eventId: z.string().min(1),
       pickedTeam: z.string().min(1),
-      isBestBet: z.boolean(),
     })
   ),
   tiebreakerTotal: z.number().nullable(),
@@ -103,7 +102,7 @@ const PickemPickSchema = z.object({
 
 export async function submitPickemPicks(
   entryId: string,
-  picks: { eventId: string; pickedTeam: string; isBestBet: boolean }[],
+  picks: { eventId: string; pickedTeam: string }[],
   tiebreakerTotal: number | null,
   weekKey: string
 ): Promise<{ ok: true; lockedCount: number }> {
@@ -119,6 +118,16 @@ export async function submitPickemPicks(
   });
   if (!entry) throw new Error("Entry not found");
   if (entry.userId !== session.user.id) throw new Error("Forbidden");
+
+  // Enforce the pool's matchups-per-week cap, if set
+  try {
+    const settings = JSON.parse(entry.pool.settingsJson) as { gamesPerWeek?: number };
+    if (settings.gamesPerWeek && input.picks.length > settings.gamesPerWeek) {
+      throw new Error(`This pool allows ${settings.gamesPerWeek} picks per week`);
+    }
+  } catch (e) {
+    if (e instanceof Error && e.message.includes("picks per week")) throw e;
+  }
 
   // Fetch all relevant events to check lock status
   const eventIds = input.picks.map((p) => p.eventId);

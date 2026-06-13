@@ -76,17 +76,26 @@ export default async function PicksPage({
       });
   }
 
-  // Games for pickem
-  const games = pool.slateGames.map((sg) => ({
-    eventId: sg.sportEvent.id,
-    homeTeam: sg.sportEvent.homeTeam,
-    awayTeam: sg.sportEvent.awayTeam,
-    startsAt: sg.sportEvent.startsAt.toISOString(),
-    spread: sg.sportEvent.spread ?? null,
-    status: sg.sportEvent.status,
-    homeScore: sg.sportEvent.homeScore ?? null,
-    awayScore: sg.sportEvent.awayScore ?? null,
-  }));
+  // This week's slate (the full season is attached to the pool)
+  const games = pool.slateGames
+    .filter((sg) => (sg.sportEvent.week ?? weekNumber) === weekNumber)
+    .map((sg) => ({
+      eventId: sg.sportEvent.id,
+      homeTeam: sg.sportEvent.homeTeam,
+      awayTeam: sg.sportEvent.awayTeam,
+      startsAt: sg.sportEvent.startsAt.toISOString(),
+      spread: sg.sportEvent.spread ?? null,
+      status: sg.sportEvent.status,
+      homeScore: sg.sportEvent.homeScore ?? null,
+      awayScore: sg.sportEvent.awayScore ?? null,
+    }));
+
+  // Pick'em pools can cap how many matchups count each week
+  let gamesPerWeek: number | null = null;
+  try {
+    const settings = JSON.parse(pool.settingsJson) as { gamesPerWeek?: number };
+    if (settings.gamesPerWeek && settings.gamesPerWeek > 0) gamesPerWeek = settings.gamesPerWeek;
+  } catch { /* */ }
 
   // Locked teams for survivor (games that already started)
   const lockedTeams = pool.gameType === "NFL_SURVIVOR"
@@ -99,7 +108,6 @@ export default async function PicksPage({
   let existingPickemPicks: {
     eventId: string;
     pickedTeam: string;
-    isBestBet: boolean;
   }[] = [];
   let existingTiebreaker: number | null = null;
   let existingSurvivorTeam: string | null = null;
@@ -107,7 +115,7 @@ export default async function PicksPage({
   if (existingPick) {
     try {
       const payload = JSON.parse(existingPick.payloadJson) as {
-        picks?: { eventId: string; pickedTeam: string; isBestBet: boolean }[];
+        picks?: { eventId: string; pickedTeam: string }[];
         tiebreakerTotal?: number | null;
         teamSlug?: string;
       };
@@ -192,6 +200,7 @@ export default async function PicksPage({
           <SurvivorPicksClient
             entryId={userEntry.id}
             weekKey={weekKey}
+            games={games}
             usedTeams={usedTeams}
             lockedTeams={lockedTeams}
             existingTeam={existingSurvivorTeam}
@@ -199,7 +208,7 @@ export default async function PicksPage({
           />
         )}
 
-        {(pool.gameType === "NFL_PICKEM" || pool.gameType === "CFB_PICKEM") && (
+        {["NFL_PICKEM", "CFB_PICKEM", "COMBO_PICKEM"].includes(pool.gameType) && (
           <PickemPicksClient
             entryId={userEntry.id}
             weekKey={weekKey}
@@ -207,6 +216,7 @@ export default async function PicksPage({
             existingPicks={existingPickemPicks}
             existingTiebreaker={existingTiebreaker}
             poolId={id}
+            maxPicks={gamesPerWeek}
           />
         )}
 

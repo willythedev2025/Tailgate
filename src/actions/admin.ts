@@ -117,7 +117,7 @@ export async function updateGameScore(
   for (const pick of picksToUpdate) {
     try {
       const payload = JSON.parse(pick.payloadJson) as {
-        picks?: { eventId: string; pickedTeam: string; isBestBet: boolean }[];
+        picks?: { eventId: string; pickedTeam: string }[];
         teamSlug?: string;
       };
 
@@ -160,7 +160,7 @@ export async function updateGameScore(
         }
         triggered = true;
       } else if (
-        (gameType === "NFL_PICKEM" || gameType === "CFB_PICKEM") &&
+        (gameType === "NFL_PICKEM" || gameType === "CFB_PICKEM" || gameType === "COMBO_PICKEM") &&
         payload.picks
       ) {
         const gamePick = payload.picks.find((p) => p.eventId === input.eventId);
@@ -171,7 +171,7 @@ export async function updateGameScore(
         const isTie = event.homeScore === event.awayScore;
         const correct = !isTie && (pickedHome ? homeWon : !homeWon);
         const result = isTie ? "PUSH" : correct ? "WIN" : "LOSS";
-        const points = result === "WIN" ? (gamePick.isBestBet ? 2 : 1) : 0;
+        const points = result === "WIN" ? 1 : 0;
 
         // Update individual game result within the payload
         const updatedPicks = payload.picks.map((p) =>
@@ -263,7 +263,7 @@ export async function simulateWeek(
   for (const pick of weekPicks) {
     try {
       const payload = JSON.parse(pick.payloadJson) as {
-        picks?: { eventId: string; pickedTeam: string; isBestBet: boolean }[];
+        picks?: { eventId: string; pickedTeam: string }[];
         teamSlug?: string;
       };
 
@@ -294,7 +294,7 @@ export async function simulateWeek(
           });
         }
       } else if (
-        (pool.gameType === "NFL_PICKEM" || pool.gameType === "CFB_PICKEM") &&
+        (pool.gameType === "NFL_PICKEM" || pool.gameType === "CFB_PICKEM" || pool.gameType === "COMBO_PICKEM") &&
         payload.picks
       ) {
         let totalPoints = 0;
@@ -304,7 +304,7 @@ export async function simulateWeek(
           const pickedHome = p.pickedTeam === game.homeTeam;
           const homeWon = game.homeScore! > game.awayScore!;
           const correct = pickedHome ? homeWon : !homeWon;
-          const pts = correct ? (p.isBestBet ? 2 : 1) : 0;
+          const pts = correct ? 1 : 0;
           totalPoints += pts;
           return { ...p, result: correct ? "WIN" : "LOSS", points: pts };
         });

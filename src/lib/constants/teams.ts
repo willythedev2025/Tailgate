@@ -96,3 +96,12 @@ export function getTeam(slug: string): TeamInfo | undefined {
 export function getTeamColor(slug: string): string {
   return getTeam(slug)?.color ?? "#252A33";
 }
+
+export function isNflTeam(slug: string): boolean {
+  return NFL_TEAMS.some((t) => t.slug === slug);
+}
+
+// ESPN serves NFL logos by team code, which matches our NFL slugs
+export function getNflLogoUrl(slug: string): string {
+  return `https://a.espncdn.com/i/teamlogos/nfl/500/${slug}.png`;
+}

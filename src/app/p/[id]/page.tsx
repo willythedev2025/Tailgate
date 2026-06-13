@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PoolTicker } from "@/components/pools/pool-ticker";
+import { TeamLogo } from "@/components/ui/team-logo";
 import { getTeam } from "@/lib/constants/teams";
 import { scoreToDisplay } from "@/lib/utils";
 import { EnterPoolButton } from "./enter-pool-button";
@@ -22,6 +23,7 @@ function getCurrentWeekNumber(): number {
 const GAME_TYPE_LABELS: Record<string, string> = {
   NFL_PICKEM: "NFL Pick'em",
   CFB_PICKEM: "CFB Pick'em",
+  COMBO_PICKEM: "NFL + CFB Pick'em",
   NFL_SURVIVOR: "NFL Survivor",
   GOLF_MAJOR: "Golf Major",
   GOLF_ONE_DONE: "One & Done",
@@ -130,7 +132,7 @@ export default async function PoolPage({
           />
         )}
 
-        {(pool.gameType === "NFL_PICKEM" || pool.gameType === "CFB_PICKEM") && (
+        {["NFL_PICKEM", "CFB_PICKEM", "COMBO_PICKEM"].includes(pool.gameType) && (
           <PickemPoolView
             pool={pool}
             userEntry={userEntry}
@@ -320,6 +322,7 @@ function PickedTeamChip({ payloadJson }: { payloadJson: string }) {
   return (
     <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold" style={{ backgroundColor: "var(--color-surface-2)" }}>
       <span style={{ color: "var(--color-green)" }}>✓</span>
+      <TeamLogo slug={teamSlug} size={20} />
       <span style={{ color: "var(--color-text)" }}>{team ? `${team.city} ${team.name}` : teamSlug}</span>
       <span className="text-xs font-semibold" style={{ color: "var(--color-text-dim)" }}>locked in</span>
     </div>

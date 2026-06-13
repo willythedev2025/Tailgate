@@ -17,17 +17,19 @@ async function requireGroupCommissioner(groupId: string, userId: string) {
   return member;
 }
 
-const GAME_TYPE_SPORT: Record<string, string | null> = {
-  NFL_PICKEM: "NFL",
-  CFB_PICKEM: "CFB",
-  NFL_SURVIVOR: "NFL",
-  GOLF_MAJOR: null,
-  GOLF_ONE_DONE: null,
+const GAME_TYPE_SPORTS: Record<string, string[]> = {
+  NFL_PICKEM: ["NFL"],
+  CFB_PICKEM: ["CFB"],
+  COMBO_PICKEM: ["NFL", "CFB"],
+  NFL_SURVIVOR: ["NFL"],
+  GOLF_MAJOR: [],
+  GOLF_ONE_DONE: [],
 };
 
 const DEFAULT_SETTINGS: Record<string, object> = {
-  NFL_PICKEM: { ats: false, bestBet: true },
-  CFB_PICKEM: { ats: false, bestBet: true },
+  NFL_PICKEM: { ats: false },
+  CFB_PICKEM: { ats: false },
+  COMBO_PICKEM: { ats: false },
   NFL_SURVIVOR: { mulligan: false, allEliminated: "end" },
   GOLF_MAJOR: { bonusLabels: [] },
   GOLF_ONE_DONE: { penalty: "worst-plus-2" },
@@ -37,10 +39,11 @@ const DEFAULT_SETTINGS: Record<string, object> = {
 
 const CreatePoolSchema = z.object({
   groupId: z.string().min(1),
-  gameType: z.enum(["NFL_PICKEM", "CFB_PICKEM", "NFL_SURVIVOR", "GOLF_MAJOR", "GOLF_ONE_DONE"]),
+  gameType: z.enum(["NFL_PICKEM", "CFB_PICKEM", "COMBO_PICKEM", "NFL_SURVIVOR", "GOLF_MAJOR", "GOLF_ONE_DONE"]),
   name: z.string().min(1).max(80),
   season: z.number().int().min(2020).max(2100),
   entryFeeDisplay: z.string().max(40).optional(),
+  gamesPerWeek: z.number().int().min(1).max(30).optional(),
 });
 
 export async function createPool(input: {
@@ -49,12 +52,18 @@ export async function createPool(input: {
   name: string;
   season: number;
   entryFeeDisplay?: string;
+  gamesPerWeek?: number;
 }): Promise<{ poolId: string }> {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
   const parsed = CreatePoolSchema.parse(input);
   await requireGroupCommissioner(parsed.groupId, session.user.id);
+
+  const settings: Record<string, unknown> = { ...(DEFAULT_SETTINGS[parsed.gameType] ?? {}) };
+  if (parsed.gamesPerWeek && parsed.gameType.endsWith("PICKEM")) {
+    settings.gamesPerWeek = parsed.gamesPerWeek;
+  }
 
   const pool = await prisma.pool.create({
     data: {
@@ -63,17 +72,17 @@ export async function createPool(input: {
       name: parsed.name,
       season: parsed.season,
       status: "OPEN",
-      settingsJson: JSON.stringify(DEFAULT_SETTINGS[parsed.gameType] ?? {}),
+      settingsJson: JSON.stringify(settings),
       entryFeeDisplay: parsed.entryFeeDisplay || null,
       createdById: session.user.id,
     },
   });
 
   // Attach the season's slate of games for team-sport pools
-  const sport = GAME_TYPE_SPORT[parsed.gameType];
-  if (sport) {
+  const sports = GAME_TYPE_SPORTS[parsed.gameType] ?? [];
+  if (sports.length > 0) {
     const events = await prisma.sportEvent.findMany({
-      where: { sport, season: parsed.season },
+      where: { sport: { in: sports }, season: parsed.season },
       orderBy: [{ week: "asc" }, { gameNumber: "asc" }, { startsAt: "asc" }],
     });
     if (events.length > 0) {
