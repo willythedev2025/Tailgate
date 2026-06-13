@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { AppShell } from "@/components/layout/app-shell";
+import { VenmoForm } from "./venmo-form";
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -107,6 +108,12 @@ export default async function ProfilePage() {
             </div>
           </div>
         )}
+
+        {/* Venmo */}
+        <div className="card p-5">
+          <h2 className="text-label mb-4">VENMO</h2>
+          <VenmoForm initialHandle={user.venmoHandle} />
+        </div>
 
         {/* Sign out */}
         <div className="card p-5">

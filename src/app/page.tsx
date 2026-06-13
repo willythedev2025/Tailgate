@@ -49,6 +49,22 @@ export default async function LandingPage() {
         </div>
       </header>
 
+      {/* Sports nav */}
+      <nav
+        className="flex items-center gap-1 px-4 overflow-x-auto"
+        style={{ backgroundColor: "var(--color-ink-2)" }}
+      >
+        {["Football", "Baseball", "Basketball", "Hockey", "Golf", "Other"].map((sport) => (
+          <a
+            key={sport}
+            href={`/#games-${sport.toLowerCase()}`}
+            className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors text-white/60 hover:text-white"
+          >
+            {sport}
+          </a>
+        ))}
+      </nav>
+
       {/* Hero — full-bleed football image with overlay */}
       <section className="relative min-h-[480px] md:min-h-[560px] overflow-hidden flex items-center">
         <img
@@ -235,12 +251,33 @@ export default async function LandingPage() {
             </div>
           </div>
 
-          {/* Wizard mockup */}
+          {/* Wizard mockup — in a phone */}
           <div className="hidden lg:flex justify-center">
             <div
-              className="w-full max-w-sm rounded-2xl p-6 shadow-2xl"
-              style={{ backgroundColor: "var(--color-bg)", border: "1px solid var(--color-border)" }}
+              className="relative w-[320px] rounded-[3rem] p-[10px] shadow-2xl"
+              style={{
+                backgroundColor: "#0C1322",
+                border: "1px solid rgba(255,255,255,0.18)",
+                boxShadow: "0 30px 60px -20px rgba(0,0,0,0.55)",
+              }}
             >
+              {/* Side buttons */}
+              <div className="absolute -left-[2px] top-24 w-[3px] h-10 rounded-l" style={{ backgroundColor: "rgba(255,255,255,0.25)" }} />
+              <div className="absolute -left-[2px] top-40 w-[3px] h-14 rounded-l" style={{ backgroundColor: "rgba(255,255,255,0.25)" }} />
+              <div className="absolute -right-[2px] top-32 w-[3px] h-16 rounded-r" style={{ backgroundColor: "rgba(255,255,255,0.25)" }} />
+
+              <div className="rounded-[2.4rem] overflow-hidden" style={{ backgroundColor: "var(--color-bg)" }}>
+                {/* Status bar + notch */}
+                <div className="relative flex items-center justify-between px-7 pt-3 pb-1">
+                  <span className="text-[11px] font-bold tabular" style={{ color: "var(--color-text)" }}>9:41</span>
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 top-2 w-24 h-6 rounded-full"
+                    style={{ backgroundColor: "#0C1322" }}
+                  />
+                  <span className="text-[10px]" style={{ color: "var(--color-text)" }}>▮▮▮ ⚡</span>
+                </div>
+
+                <div className="px-5 pb-6 pt-3">
               <p className="text-headline text-lg mb-5" style={{ color: "var(--color-text)" }}>
                 PICK YOUR GAME
               </p>
@@ -300,6 +337,11 @@ export default async function LandingPage() {
                 style={{ backgroundColor: "var(--color-accent)" }}
               >
                 Create Pick&apos;em
+              </div>
+
+                  {/* Home indicator */}
+                  <div className="mt-5 mx-auto w-28 h-1 rounded-full" style={{ backgroundColor: "var(--color-muted)" }} />
+                </div>
               </div>
             </div>
           </div>

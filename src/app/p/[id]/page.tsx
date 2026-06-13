@@ -11,6 +11,7 @@ import { PoolTicker } from "@/components/pools/pool-ticker";
 import { TeamLogo } from "@/components/ui/team-logo";
 import { getTeam } from "@/lib/constants/teams";
 import { scoreToDisplay } from "@/lib/utils";
+import { parseFeeAmount, venmoPayUrl } from "@/lib/venmo";
 import { EnterPoolButton } from "./enter-pool-button";
 
 function getCurrentWeekNumber(): number {
@@ -53,7 +54,18 @@ export default async function PoolPage({
   if (!isMember) redirect("/home");
 
   const userId = session.user!.id!;
+  const isCommissioner = pool.group.members[0]?.role === "COMMISSIONER";
   const userEntry = pool.entries.find((e) => e.userId === userId) ?? null;
+
+  // Commissioner's Venmo handle powers one-tap entry-fee payment
+  const commissionerMember = await prisma.groupMember.findFirst({
+    where: { groupId: pool.groupId, role: "COMMISSIONER" },
+    include: { user: { select: { venmoHandle: true, name: true } } },
+  });
+  const venmoHandle = commissionerMember?.user.venmoHandle ?? null;
+  const feeAmount = parseFeeAmount(pool.entryFeeDisplay);
+  const showPayBanner =
+    !!userEntry && !userEntry.paidAt && !!pool.entryFeeDisplay && !isCommissioner;
   const isLive = pool.status === "LIVE";
   const currentWeek = getCurrentWeekNumber();
   const weekKey = `week-${currentWeek}`;
@@ -78,23 +90,65 @@ export default async function PoolPage({
 
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-8">
         {/* Pool header */}
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span
-              className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-              style={{ backgroundColor: "var(--color-surface-2)", color: "var(--color-text-muted)" }}
-            >
-              {GAME_TYPE_LABELS[pool.gameType] ?? pool.gameType.replace(/_/g, " ")}
-            </span>
-            {isLive && <Badge variant="live">Live</Badge>}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span
+                className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                style={{ backgroundColor: "var(--color-surface-2)", color: "var(--color-text-muted)" }}
+              >
+                {GAME_TYPE_LABELS[pool.gameType] ?? pool.gameType.replace(/_/g, " ")}
+              </span>
+              {isLive && <Badge variant="live">Live</Badge>}
+            </div>
+            <h1 className="text-headline text-2xl mb-1" style={{ color: "var(--color-text)" }}>
+              {pool.name}
+            </h1>
+            <Link href={`/g/${pool.group.slug}`} className="text-xs hover:underline" style={{ color: "var(--color-text-muted)" }}>
+              {pool.group.name}
+            </Link>
           </div>
-          <h1 className="text-headline text-2xl mb-1" style={{ color: "var(--color-text)" }}>
-            {pool.name}
-          </h1>
-          <Link href={`/g/${pool.group.slug}`} className="text-xs hover:underline" style={{ color: "var(--color-text-muted)" }}>
-            {pool.group.name}
-          </Link>
+          {isCommissioner && (
+            <div className="flex items-center gap-2 shrink-0">
+              <Link href={`/p/${pool.id}/roster`}>
+                <Button variant="secondary" size="sm">Roster &amp; dues</Button>
+              </Link>
+              <Link href={`/p/${pool.id}/admin`}>
+                <Button variant="ghost" size="sm">Admin</Button>
+              </Link>
+            </div>
+          )}
         </div>
+
+        {/* Entry fee banner */}
+        {showPayBanner && (
+          <div
+            className="rounded-xl border px-5 py-4 flex items-center justify-between gap-4 flex-wrap"
+            style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-gold)" }}
+          >
+            <div>
+              <p className="font-black text-sm" style={{ color: "var(--color-text)" }}>
+                Entry fee: {pool.entryFeeDisplay}
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                {venmoHandle
+                  ? `Settle up with ${commissionerMember?.user.name ?? "your commissioner"} (@${venmoHandle})`
+                  : "Settle up with your commissioner."}
+              </p>
+            </div>
+            {venmoHandle && (
+              <a
+                href={venmoPayUrl(venmoHandle, feeAmount, pool.name)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center px-5 py-2 rounded-lg text-sm font-bold text-white transition-all hover:opacity-90"
+                style={{ backgroundColor: "#008CFF" }}
+              >
+                Pay with Venmo
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Enter pool banner */}
         {!userEntry && ["OPEN", "LIVE"].includes(pool.status) && (

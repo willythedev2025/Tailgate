@@ -21,6 +21,9 @@ const SPORTS = [
   { value: "NFL", emoji: "🏈", label: "NFL" },
   { value: "CFB", emoji: "🎓", label: "College Football" },
   { value: "GOLF", emoji: "⛳", label: "Golf" },
+  { value: "BASKETBALL", emoji: "🏀", label: "Basketball" },
+  { value: "BASEBALL", emoji: "⚾", label: "Baseball" },
+  { value: "HOCKEY", emoji: "🏒", label: "Hockey" },
 ] as const;
 
 interface GameStyle {
@@ -46,6 +49,18 @@ const GAME_STYLES: Record<string, GameStyle[]> = {
       value: "COMBO_PICKEM",
       label: "NFL + CFB Combo Pick'em",
       description: "One pool, both slates — pick winners across pro and college football.",
+    },
+    {
+      value: "SQUARES",
+      label: "Super Bowl Squares",
+      description: "Claim grid squares, sweat the digit draw, win on quarter scores.",
+      comingSoon: true,
+    },
+    {
+      value: "NFL_MARGIN",
+      label: "Margin Pool",
+      description: "One team a week — your score is their margin of victory.",
+      comingSoon: true,
     },
     {
       value: "QUICKPICKS",
@@ -81,6 +96,36 @@ const GAME_STYLES: Record<string, GameStyle[]> = {
       value: "GOLF_TIERS",
       label: "Tiers",
       description: "Build a lineup with one golfer from each tier.",
+      comingSoon: true,
+    },
+  ],
+  BASKETBALL: [
+    {
+      value: "MARCH_MADNESS",
+      label: "March Madness Bracket",
+      description: "Fill out all 63 games. Escalating points by round.",
+      comingSoon: true,
+    },
+    {
+      value: "NBA_BRACKET",
+      label: "NBA Playoff Bracket",
+      description: "Predict every series winner and length for bonus points.",
+      comingSoon: true,
+    },
+  ],
+  BASEBALL: [
+    {
+      value: "HR_DERBY",
+      label: "Home Run Derby",
+      description: "Draft sluggers before Opening Day. Most combined homers wins.",
+      comingSoon: true,
+    },
+  ],
+  HOCKEY: [
+    {
+      value: "NHL_BRACKET",
+      label: "NHL Playoff Bracket",
+      description: "Pick every series and how many games it goes.",
       comingSoon: true,
     },
   ],
